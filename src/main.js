@@ -1,0 +1,385 @@
+/**
+ * main.js — Application Entry Point
+ *
+ * Wires all modules together. This file should remain thin:
+ * - Import modules
+ * - Initialize event listeners
+ * - Orchestrate data flow between form → preview → storage
+ *
+ * No business logic lives here. Each module owns its domain.
+ */
+
+"use strict"
+
+import { $id, $all, debounce }           from "./modules/Utils.js"
+import { i18n, t, currentLang, setLang } from "./modules/I18n.js"
+import { showToast, showConfirm, updateATSBar } from "./modules/ui.js"
+import { saveData, loadData, clearData, createAutosave } from "./modules/storage.js"
+import { renderFullPreview }             from "./modules/preview.js"
+import { calculateATSScore }             from "./modules/ats.js"
+import { exportPDF }                     from "./modules/Pdf.js"
+import { initAIPanel, analyzeResume, openAIPanel, closeAIPanel } from "./modules/ai.js"
+import { initShare, decodeShareLink }    from "./modules/share.js"
+import {
+  createEducation, createExperience, createProject, createCertification, createLanguageItem,
+  getEducationData, getExperienceData, getProjectsData, getCertificationsData, getLanguagesData,
+  rebuildDynamicLabels, loadSampleCards,
+} from "./modules/form.js"
+
+// ─── Static Input Elements ────────────────────────────────────────────────────
+
+const inputs = {
+  name:        $id("fullName"),
+  role:        $id("targetRole"),
+  email:       $id("email"),
+  phone:       $id("phone"),
+  location:    $id("location"),
+  linkedin:    $id("linkedin"),
+  github:      $id("github"),
+  summary:     $id("summary"),
+  skills:      $id("skills"),
+  profileType: $id("profileType"),
+}
+
+const templateSelect  = $id("templateSelect")
+const resumePreview   = $id("resumePreview")
+const atsBar          = $id("atsBar")
+const atsValue        = $id("atsValue")
+const atsHint         = $id("atsHint")
+const scoreBox        = document.querySelector(".score-box")
+
+// ─── State Collector ──────────────────────────────────────────────────────────
+
+/**
+ * Collects the full current resume state from all inputs and dynamic sections.
+ * This is the single source of truth for state.
+ * @returns {object}
+ */
+function getState() {
+  return {
+    name:        inputs.name?.value        ?? "",
+    role:        inputs.role?.value        ?? "",
+    email:       inputs.email?.value       ?? "",
+    phone:       inputs.phone?.value       ?? "",
+    location:    inputs.location?.value    ?? "",
+    linkedin:    inputs.linkedin?.value    ?? "",
+    github:      inputs.github?.value      ?? "",
+    summary:     inputs.summary?.value     ?? "",
+    skills:      inputs.skills?.value      ?? "",
+    profileType: inputs.profileType?.value ?? "experienced",
+    lang:        currentLang,
+    template:    templateSelect?.value     ?? "classic",
+    education:       getEducationData(),
+    experience:      getExperienceData(),
+    projects:        getProjectsData(),
+    certifications:  getCertificationsData(),
+    languages:       getLanguagesData(),
+  }
+}
+
+// ─── Core Update Cycle ────────────────────────────────────────────────────────
+
+/**
+ * Main render cycle: collect state → render preview → update ATS bar.
+ * Called on every user input (debounced).
+ * Autosave is decoupled and runs on its own timer.
+ */
+function updateAll() {
+  const state = getState()
+  renderFullPreview(state)
+  const score = calculateATSScore(state)
+  updateATSBar(score, atsBar, atsValue, atsHint, scoreBox)
+}
+
+const updateAllDebounced = debounce(updateAll, 120)
+
+// ─── Autosave (decoupled from preview) ───────────────────────────────────────
+// Saves every 5 seconds after last change — not on every keypress.
+
+const scheduleAutosave = createAutosave(getState)
+
+// ─── Template ─────────────────────────────────────────────────────────────────
+
+function applyTemplate(name) {
+  if (!resumePreview) return
+  resumePreview.classList.remove("template-classic", "template-modern", "template-compact")
+  resumePreview.classList.add(`template-${name}`)
+}
+
+// ─── Language Switch ──────────────────────────────────────────────────────────
+
+/**
+ * Updates all static UI text and rebuilds dynamic card labels.
+ * @param {"en"|"ar"} lang
+ */
+function applyTranslation(lang) {
+  setLang(lang)
+  const tr = t()
+
+  // Update all elements that have a matching i18n key as their ID
+  const staticIds = [
+    "brandSubtitle","heroBadge","heroTitle","heroDescription",
+    "heroFeature1","heroFeature2","heroFeature3","heroFeature4","heroFeature5",
+    "statTemplates","statFree","statAI",
+    "editorTitle","editorSubtitle","previewTitle","previewSubtitle",
+    "atsLabel","atsHint",
+    "sectionPersonal","sectionEducation","sectionExperience","sectionProjects",
+    "sectionCertifications","sectionSkillsLanguages",
+    "labelFullName","labelTargetRole","labelEmail","labelPhone",
+    "labelLocation","labelProfileType","labelLinkedin","labelGithub",
+    "labelSummary","summaryHint","labelSkills","skillsHint",
+    "labelLanguages","languagesHint",
+    "cvSummaryHeading","cvEducationHeading","cvExperienceHeading",
+    "cvProjectsHeading","cvSkillsHeading","cvCertificationsHeading","cvLanguagesHeading",
+    "aiPanelTitle","aiLoadingText","aiEmptyText",
+  ]
+
+  staticIds.forEach(id => {
+    const el = $id(id)
+    if (el && tr[id] !== undefined) el.textContent = tr[id]
+  })
+
+  // Placeholder updates
+  const placeholderMap = {
+    fullName:   "fullNamePlaceholder",
+    targetRole: "targetRolePlaceholder",
+    email:      "emailPlaceholder",
+    phone:      "phonePlaceholder",
+    location:   "locationPlaceholder",
+    summary:    "summaryPlaceholder",
+    skills:     "skillsPlaceholder",
+  }
+  Object.entries(placeholderMap).forEach(([inputKey, trKey]) => {
+    if (inputs[inputKey]) inputs[inputKey].placeholder = tr[trKey]
+  })
+
+  // Button text updates
+  const buttonMap = {
+    addEducationBtn:    "addEducation",
+    addExperienceBtn:   "addExperience",
+    addProjectBtn:      "addProject",
+    addCertificationBtn:"addCertification",
+    addLanguageBtn:     "addLanguage",
+    aiAnalyzeBtn:       "analyzeBtn",
+  }
+  Object.entries(buttonMap).forEach(([id, trKey]) => {
+    const el = $id(id)
+    if (el) el.textContent = tr[trKey]
+  })
+
+  // Direction & lang attribute
+  document.documentElement.lang = lang
+  document.documentElement.dir  = lang === "ar" ? "rtl" : "ltr"
+
+  // Language toggle button states
+  $all(".lang-btn").forEach(btn => {
+    const isActive = btn.dataset.lang === lang
+    btn.classList.toggle("active", isActive)
+    btn.setAttribute("aria-pressed", String(isActive))
+  })
+
+  // Rebuild dynamic card labels
+  rebuildDynamicLabels()
+}
+
+// ─── Data Load/Restore ────────────────────────────────────────────────────────
+
+/**
+ * Restores state from a saved data object (localStorage or share link).
+ * @param {object} data
+ */
+function restoreState(data) {
+  const simpleKeys = ["name","role","email","phone","location","linkedin","github","summary","skills"]
+  simpleKeys.forEach(key => {
+    if (inputs[key] && data[key] !== undefined) inputs[key].value = data[key]
+  })
+  if (inputs.profileType && data.profileType) inputs.profileType.value = data.profileType
+
+  if (templateSelect && data.template) {
+    templateSelect.value = data.template
+    applyTemplate(data.template)
+  }
+  if (data.lang) applyTranslation(data.lang)
+
+  if (data.education?.length)      data.education.forEach(item => createEducation(item, updateAllDebounced))
+  if (data.experience?.length)     data.experience.forEach(item => createExperience(item, updateAllDebounced))
+  if (data.projects?.length)       data.projects.forEach(item => createProject(item, updateAllDebounced))
+  if (data.certifications?.length) data.certifications.forEach(item => createCertification(item, updateAllDebounced))
+
+  // edu key for share link (edu vs education)
+  if (data.edu?.length) data.edu.forEach(item => createEducation(item, updateAllDebounced))
+  if (data.exp?.length) data.exp.forEach(item => createExperience(item, updateAllDebounced))
+  if (data.proj?.length) data.proj.forEach(item => createProject(item, updateAllDebounced))
+  if (data.cert?.length) data.cert.forEach(item => createCertification(item, updateAllDebounced))
+
+  const langs = data.languagesData ?? data.langs ?? data.languages
+  if (langs?.length) langs.forEach(l => createLanguageItem(l.language, l.level, updateAllDebounced))
+}
+
+// ─── Mobile Preview Toggle ────────────────────────────────────────────────────
+
+function initMobilePreviewToggle() {
+  const toggleBtn    = $id("mobilePreviewToggle")
+  const previewPanel = document.querySelector(".preview-panel")
+  if (!toggleBtn || !previewPanel) return
+
+  let previewVisible = false
+  const tr = t()
+
+  toggleBtn.addEventListener("click", () => {
+    previewVisible = !previewVisible
+    previewPanel.classList.toggle("preview-panel--mobile-visible", previewVisible)
+    toggleBtn.textContent = previewVisible ? tr.previewToggleHide : tr.previewToggleShow
+    toggleBtn.setAttribute("aria-expanded", String(previewVisible))
+
+    if (previewVisible) {
+      // Scroll preview into view smoothly
+      previewPanel.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  })
+}
+
+// ─── Escape Key Handler ───────────────────────────────────────────────────────
+// Single unified handler — no duplicate listeners.
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return
+  const aiPanel    = $id("aiPanel")
+  const shareModal = $id("shareModal")
+  if (aiPanel?.classList.contains("open"))          { closeAIPanel(); return }
+  if (!shareModal?.classList.contains("hidden"))     { $id("shareCloseBtn")?.click(); return }
+  if (!$id("confirmDialog")?.classList.contains("hidden")) { $id("confirmCancelBtn")?.click() }
+})
+
+// ─── Application Bootstrap ────────────────────────────────────────────────────
+
+function init() {
+  // 1. Try loading from a share link first
+  const shared = decodeShareLink()
+  if (shared) {
+    restoreState(shared)
+    showToast(t().toastSharedLoaded, "success")
+  } else {
+    // 2. Restore from localStorage
+    const saved = loadData()
+    if (saved) {
+      restoreState(saved)
+    } else {
+      // 3. First visit — seed default languages
+      createLanguageItem("Arabic",  "Native",       updateAllDebounced)
+      createLanguageItem("English", "Intermediate", updateAllDebounced)
+    }
+  }
+
+  // 4. Initial render
+  updateAll()
+
+  // 5. Wire static input listeners
+  Object.values(inputs).forEach(input => {
+    input?.addEventListener("input", () => {
+      updateAllDebounced()
+      scheduleAutosave()
+    })
+  })
+
+  // 6. Section add buttons
+  $id("addEducationBtn")?.addEventListener("click",    () => { createEducation({},    updateAllDebounced); updateAllDebounced() })
+  $id("addExperienceBtn")?.addEventListener("click",   () => { createExperience({},   updateAllDebounced); updateAllDebounced() })
+  $id("addProjectBtn")?.addEventListener("click",      () => { createProject({},      updateAllDebounced); updateAllDebounced() })
+  $id("addCertificationBtn")?.addEventListener("click",() => { createCertification({},updateAllDebounced); updateAllDebounced() })
+  $id("addLanguageBtn")?.addEventListener("click",     () => { createLanguageItem(undefined, undefined, updateAllDebounced); updateAllDebounced() })
+
+  // 7. Template switcher
+  templateSelect?.addEventListener("change", () => {
+    applyTemplate(templateSelect.value)
+    scheduleAutosave()
+  })
+
+  // 8. Language buttons
+  $all(".lang-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      applyTranslation(btn.dataset.lang)
+      updateAll()
+      scheduleAutosave()
+    })
+  })
+
+  // 9. Action buttons
+  $id("saveBtn")?.addEventListener("click", () => {
+    saveData(getState())
+    showToast(t().toastSaved, "success")
+  })
+
+  $id("clearBtn")?.addEventListener("click", async () => {
+    const tr = t()
+    const confirmed = await showConfirm({
+      title:        tr.confirmClearTitle,
+      body:         tr.confirmClearBody,
+      confirmLabel: tr.confirmClearYes,
+      cancelLabel:  tr.confirmClearNo,
+      variant:      "danger",
+    })
+    if (confirmed) {
+      clearData()
+      showToast(tr.toastCleared, "info")
+      setTimeout(() => location.reload(), 600)
+    }
+  })
+
+  $id("sampleBtn")?.addEventListener("click", () => {
+    // Set simple fields
+    if (inputs.name)     inputs.name.value     = "Nasser Al-Tamimi"
+    if (inputs.role)     inputs.role.value     = "Full-Stack Software Engineer"
+    if (inputs.email)    inputs.email.value    = "nasser@example.com"
+    if (inputs.phone)    inputs.phone.value    = "+966 50 123 4567"
+    if (inputs.location) inputs.location.value = "Riyadh, Saudi Arabia"
+    if (inputs.linkedin) inputs.linkedin.value = "linkedin.com/in/nasser-altamimi"
+    if (inputs.github)   inputs.github.value   = "github.com/nasser-dev"
+    if (inputs.summary)  inputs.summary.value  = "Results-driven Full-Stack Engineer with 4+ years of experience building scalable web applications. Proficient in React, Node.js, and cloud technologies."
+    if (inputs.skills)   inputs.skills.value   = "JavaScript, TypeScript, React, Next.js, Node.js, Express, Python, PostgreSQL, MongoDB, Docker, AWS, Git, REST APIs, GraphQL"
+    if (inputs.profileType) inputs.profileType.value = "experienced"
+
+    loadSampleCards(updateAllDebounced)
+    updateAll()
+    showToast(t().toastSampleLoaded, "info")
+  })
+
+  // 10. PDF export
+  $id("pdfBtn")?.addEventListener("click", async () => {
+    const tr = t()
+    showToast(tr.toastPdf, "info", 4000)
+    try {
+      const filename = `CreateCV-${inputs.name?.value || "Resume"}.pdf`
+      await exportPDF(resumePreview, filename)
+      showToast(tr.toastPdfSuccess, "success")
+    } catch (err) {
+      console.error("[PDF]", err)
+      const msg = err.message?.includes("load") ? tr.toastPdfLibError : tr.toastPdfError
+      showToast(msg, "error")
+    }
+  })
+
+  // 11. AI panel
+  initAIPanel()
+
+  // Wire up the re-analyze event from ai.js result panel
+  $id("aiResult")?.addEventListener("reanalyze", () => {
+    analyzeResume(getState())
+  })
+  $id("aiAnalyzeBtn")?.addEventListener("click", () => {
+    analyzeResume(getState())
+  })
+
+  // 12. Share feature
+  initShare(getState)
+
+  // 13. Mobile preview toggle
+  initMobilePreviewToggle()
+}
+
+// Boot when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init)
+} else {
+  init()
+}

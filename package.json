@@ -1,0 +1,26 @@
+{
+  "name": "createcv",
+  "version": "3.0.0",
+  "description": "Professional bilingual ATS Resume Builder — Arabic + English",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start":   "node server/server.js",
+    "dev":     "node --watch server/server.js",
+    "lint":    "eslint src/**/*.js server/**/*.js",
+    "test":    "echo \"No tests yet — add Jest/Vitest here\""
+  },
+  "dependencies": {
+    "cors":              "^2.8.5",
+    "express":           "^4.18.3",
+    "express-rate-limit":"^7.2.0",
+    "helmet":            "^7.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "keywords": ["resume", "cv", "ats", "arabic", "bilingual", "ai"],
+  "license": "ISC"
+}
