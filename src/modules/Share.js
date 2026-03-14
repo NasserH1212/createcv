@@ -8,7 +8,7 @@
 
 "use strict"
 
-import { $id }           from "../../utils.js"
+import { $id }           from "./Utils.js"
 import { t, currentLang } from "./I18n.js"
 import { showToast }      from "./Ui.js"
 import { openModal, closeModal, createFocusTrap } from "./Ui.js"
