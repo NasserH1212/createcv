@@ -13,13 +13,13 @@
 
 import { $id, $all, debounce }           from "./modules/Utils.js"
 import { i18n, t, currentLang, setLang } from "./modules/I18n.js"
-import { showToast, showConfirm, updateATSBar } from "./modules/ui.js"
-import { saveData, loadData, clearData, createAutosave } from "./modules/storage.js"
-import { renderFullPreview }             from "./modules/preview.js"
-import { calculateATSScore }             from "./modules/ats.js"
+import { showToast, showConfirm, updateATSBar } from "./modules/Ui.js"
+import { saveData, loadData, clearData, createAutosave } from "./modules/Storage.js"
+import { renderFullPreview }             from "./modules/Preview.js"
+import { calculateATSScore }             from "./modules/Ats.js"
 import { exportPDF }                     from "./modules/Pdf.js"
-import { initAIPanel, analyzeResume, openAIPanel, closeAIPanel } from "./modules/ai.js"
-import { initShare, decodeShareLink }    from "./modules/share.js"
+import { initAIPanel, analyzeResume, openAIPanel, closeAIPanel } from "./modules/Ai.js"
+import { initShare, decodeShareLink }    from "./modules/Share.js"
 import {
   createEducation, createExperience, createProject, createCertification, createLanguageItem,
   getEducationData, getExperienceData, getProjectsData, getCertificationsData, getLanguagesData,
@@ -102,7 +102,7 @@ const scheduleAutosave = createAutosave(getState)
 
 function applyTemplate(name) {
   if (!resumePreview) return
-  resumePreview.classList.remove("template-classic", "template-modern", "template-compact")
+  resumePreview.classList.remove("template-classic", "template-executive", "template-minimal")
   resumePreview.classList.add(`template-${name}`)
 }
 

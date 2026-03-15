@@ -716,42 +716,47 @@ button, input, textarea, select { font: inherit; }
 /* ═══════════════════════════════════════════════
    18. RESUME PAPER (the actual resume document)
 ═══════════════════════════════════════════════ */
+/* ─── Resume Paper Base (shared by all templates) ─── */
 .resume-paper {
   width: 210mm;
   min-height: 297mm;
   max-width: 100%;
   margin: 0 auto;
-  padding: 20mm 16mm 18mm;
+  padding: 18mm 18mm 16mm;
   background: #fff;
   box-shadow: 0 8px 40px rgba(0,0,0,.15);
   border-radius: 2px;
-  font-size: 12.5px;
-  color: #1a1a2e;
-  line-height: 1.5;
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11pt;
+  color: #111827;
+  line-height: 1.45;
+  font-family: Calibri, Arial, Helvetica, sans-serif;
 }
 
-.resume-header { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px solid currentColor; }
-.resume-header h2 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }
-.cv-role { margin: 0 0 8px; font-size: .95rem; font-weight: 600; opacity: .75; }
-.cv-contact { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: .78rem; }
-.cv-contact-item { color: #555; }
-.cv-contact-sep { color: #aaa; user-select: none; }
+/* ─── Resume Header (base) ─── */
+.resume-header { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid #111827; }
+.resume-header h2 { font-size: 22pt; font-weight: 700; margin: 0 0 2px; color: #111827; letter-spacing: 0.3px; }
+.cv-role { margin: 0 0 6px; font-size: 11pt; font-weight: 400; color: #444; }
+.cv-contact { display: flex; flex-wrap: wrap; gap: 3px 6px; font-size: 9pt; }
+.cv-contact-item { color: #333; }
+.cv-contact-sep { color: #999; user-select: none; }
 
-.resume-section { margin-top: 14px; }
+/* ─── Resume Sections (base) ─── */
+.resume-section { margin-top: 12px; }
 .resume-section h3 {
-  font-size: .72rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  font-size: 10pt;
+  font-weight: 700;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  padding-bottom: 5px;
-  margin: 0 0 10px;
-  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 3px;
+  margin: 0 0 8px;
+  border-bottom: 1.5px solid #111827;
+  color: #111827;
 }
 
 .empty-section { display: none; }
 
-.resume-item { margin-bottom: 10px; }
+/* ─── Resume Items (base) ─── */
+.resume-item { margin-bottom: 8px; }
 .resume-item:last-child { margin-bottom: 0; }
 
 .resume-item-head {
@@ -760,44 +765,127 @@ button, input, textarea, select { font: inherit; }
   align-items: flex-start;
   gap: 10px;
 }
-.resume-item-title { font-weight: 700; font-size: .88rem; }
-.resume-item-sub   { font-size: .82rem; opacity: .7; margin-top: 1px; }
-.resume-item-date  { font-size: .78rem; opacity: .65; white-space: nowrap; flex-shrink: 0; }
-.resume-item-desc  { font-size: .82rem; margin-top: 5px; line-height: 1.55; color: #444; }
+.resume-item-title { font-weight: 700; font-size: 10.5pt; color: #111827; }
+.resume-item-sub   { font-size: 9.5pt; color: #555; margin-top: 1px; }
+.resume-item-date  { font-size: 9pt; color: #666; white-space: nowrap; flex-shrink: 0; }
+.resume-item-desc  { font-size: 9.5pt; margin-top: 4px; line-height: 1.5; color: #333; }
 
-.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+/* ─── Tags (base) ─── */
+.tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
 .tag {
   background: #f1f5f9;
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: .78rem;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 9pt;
   font-weight: 600;
   color: #334155;
 }
 
-/* ─── Template: Modern ────────────────────────────── */
-.template-modern .resume-header {
-  background: #0f172a;
-  color: #fff;
-  margin: -20mm -16mm 0;
-  padding: 20px 24px;
-  border-bottom: none;
+/* ═══════════════════════════════════════════════════════
+   TEMPLATE 1: Classic ATS
+   - Large name with bold horizontal line
+   - Role under name, contact in one line
+   - Sections divided by solid lines
+═══════════════════════════════════════════════════════ */
+/* .template-classic uses all base styles above — no overrides needed */
+
+/* ═══════════════════════════════════════════════════════
+   TEMPLATE 2: Executive ATS
+   - Centered header, formal appearance
+   - Thinner section borders, more spacing
+   - Dates right-aligned, clean hierarchy
+═══════════════════════════════════════════════════════ */
+.template-executive .resume-header {
+  text-align: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
 }
-.template-modern .resume-header h2     { color: #fff; }
-.template-modern .resume-header .cv-role { color: rgba(255,255,255,.75); }
-.template-modern .resume-header .cv-contact-item { color: rgba(255,255,255,.7); }
-.template-modern .resume-header .cv-contact-sep  { color: rgba(255,255,255,.35); }
-.template-modern .resume-section { margin-top: 18px; }
-.template-modern .resume-section h3 {
-  color: var(--color-primary, #2563eb);
-  border-bottom-color: var(--color-primary, #2563eb);
+.template-executive .resume-header h2 {
+  font-size: 24pt;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.template-executive .cv-role {
+  font-size: 11pt;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+.template-executive .cv-contact {
+  justify-content: center;
+}
+.template-executive .resume-section {
+  margin-top: 14px;
+}
+.template-executive .resume-section h3 {
+  font-size: 10.5pt;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid #555;
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+  color: #222;
+}
+.template-executive .resume-item {
+  margin-bottom: 10px;
+}
+.template-executive .resume-item-title {
+  font-size: 10.5pt;
+}
+.template-executive .tag {
+  background: #e8edf5;
+  border-radius: 3px;
+  color: #1e293b;
 }
 
-/* ─── Template: Compact ───────────────────────────── */
-.template-compact .resume-paper { font-size: 11.5px; }
-.template-compact .resume-header h2 { font-size: 1.4rem; }
-.template-compact .resume-section  { margin-top: 10px; }
-.template-compact .resume-item     { margin-bottom: 7px; }
+/* ═══════════════════════════════════════════════════════
+   TEMPLATE 3: Minimal ATS
+   - Very clean, minimal borders
+   - Large name, no decorations
+   - Light section dividers, maximum whitespace
+═══════════════════════════════════════════════════════ */
+.template-minimal .resume-header {
+  border-bottom: none;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.template-minimal .resume-header h2 {
+  font-size: 26pt;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.template-minimal .cv-role {
+  font-size: 11pt;
+  color: #555;
+  font-weight: 400;
+}
+.template-minimal .cv-contact {
+  margin-top: 4px;
+}
+.template-minimal .resume-section {
+  margin-top: 14px;
+}
+.template-minimal .resume-section h3 {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 0.5px solid #ccc;
+  padding-bottom: 3px;
+  margin-bottom: 8px;
+  color: #333;
+}
+.template-minimal .resume-item-title {
+  font-weight: 600;
+}
+.template-minimal .tag {
+  background: transparent;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  color: #444;
+  font-weight: 500;
+}
 
 /* ═══════════════════════════════════════════════
    19. CUSTOM CONFIRM DIALOG
@@ -998,6 +1086,8 @@ html[dir="rtl"] .confirm-actions { flex-direction: row-reverse; }
   .preview-shell { padding: 12px; }
   .resume-paper  { padding: 14px 12px; }
   .resume-header h2 { font-size: 1.45rem; }
+  .template-minimal .resume-header h2 { font-size: 1.6rem; }
+  .template-executive .resume-header h2 { font-size: 1.55rem; }
 }
 
 @media (max-width: 640px) {
@@ -1051,8 +1141,9 @@ html[dir="rtl"] .confirm-actions { flex-direction: row-reverse; }
     max-width: none !important;
     min-height: auto !important;
     margin: 0 !important;
-    padding: 14mm 12mm !important;
+    padding: 18mm 18mm 16mm !important;
     border-radius: 0 !important;
     font-size: 11pt !important;
+    font-family: Calibri, Arial, Helvetica, sans-serif !important;
   }
 }

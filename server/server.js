@@ -37,11 +37,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "cdnjs.cloudflare.com"],
-      styleSrc:    ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-      fontSrc:     ["'self'", "fonts.gstatic.com"],
-      connectSrc:  ["'self'"],
-      imgSrc:      ["'self'", "data:"],
+      scriptSrc:   ["'self'", "https://cdnjs.cloudflare.com"],
+      styleSrc:    ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc:     ["'self'", "https://fonts.gstatic.com"],
+      connectSrc:  ["'self'", "https://cdnjs.cloudflare.com"],
+      imgSrc:      ["'self'", "data:", "blob:"],
       frameSrc:    ["'none'"],
       objectSrc:   ["'none'"],
     },
@@ -75,6 +75,12 @@ const aiLimiter = rateLimit({
 
 // ─── Static Files ─────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "..", "public"), {
+  maxAge: "1d",
+  etag: true,
+}))
+
+// Serve src/ directory for ES module imports (referenced by index.html)
+app.use("/src", express.static(path.join(__dirname, "..", "src"), {
   maxAge: "1d",
   etag: true,
 }))

@@ -13,7 +13,7 @@
 
 "use strict"
 
-import { escapeHtml, uid, $all } from "../../utils.js"
+import { escapeHtml, uid, $all } from "./Utils.js"
 import { t, currentLang }        from "./I18n.js"
 
 // ─── Language option lists ────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
 
 "use strict"
 
-import { splitComma } from "./modules/Utils.js"
+import { splitComma } from "./Utils.js"
 
 /**
  * Calculates an ATS completeness score from the form state.
