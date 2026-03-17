@@ -16,6 +16,7 @@ const app  = express()
 const PORT = process.env.PORT || 3001
 
 // ─── Allowed Origins ──────────────────────────────────────────────────────────
+const IS_DEV = process.env.NODE_ENV !== "production"
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:3001")
   .split(",")
   .map(o => o.trim())
@@ -24,7 +25,10 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:3001")
 app.use(cors({
   origin: (origin, cb) => {
     // Allow requests with no origin (curl, Postman in dev)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
+    if (!origin) return cb(null, true)
+    // In development, allow any localhost origin (port may vary)
+    if (IS_DEV && origin.startsWith("http://localhost:")) return cb(null, true)
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true)
     cb(new Error(`CORS: origin ${origin} not allowed`))
   },
   methods: ["GET", "POST"],
@@ -143,7 +147,7 @@ function sanitizeResumeData(raw) {
       title: 120, company: 120, start: 20, end: 20, desc: MAX_STRING_LENGTH,
     }),
     projects: sanitizeArray(raw.projects, {
-      name: 150, desc: MAX_STRING_LENGTH,
+      name: 150, url: 200, desc: MAX_STRING_LENGTH,
     }),
     certifications: sanitizeArray(raw.certifications, {
       name: 150, issuer: 150, date: 30,
@@ -279,7 +283,7 @@ app.post("/api/analyze-resume", aiLimiter, async (req, res) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-20250514",
         max_tokens: 800,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -315,7 +319,7 @@ app.post("/api/analyze-resume", aiLimiter, async (req, res) => {
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    version: "2.1.0",
+    version: "3.0.0",
     ai: !!process.env.ANTHROPIC_API_KEY,
   })
 })

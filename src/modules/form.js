@@ -133,7 +133,7 @@ function makeCurrentCheckbox(labelText, endInput, checked = false) {
   // Toggle end input
   const toggle = () => {
     endInput.disabled    = chk.checked
-    endInput.placeholder = chk.checked ? "Present" : ""
+    endInput.placeholder = chk.checked ? (currentLang === "ar" ? "حتى الآن" : "Present") : ""
     if (chk.checked) endInput.value = ""
   }
   chk.addEventListener("change", toggle)
@@ -172,7 +172,7 @@ export function createEducation(data = {}, onUpdate) {
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => onUpdate?.()))
   card.querySelectorAll("input[type='checkbox']").forEach(i => i.addEventListener("change", () => onUpdate?.()))
 
-  containers.education().appendChild(card)
+  containers.education()?.appendChild(card)
 }
 
 // ─── Experience ───────────────────────────────────────────────────────────────
@@ -208,7 +208,7 @@ export function createExperience(data = {}, onUpdate) {
   card.querySelectorAll("input, textarea").forEach(i => i.addEventListener("input", () => onUpdate?.()))
   card.querySelectorAll("input[type='checkbox']").forEach(i => i.addEventListener("change", () => onUpdate?.()))
 
-  containers.experience().appendChild(card)
+  containers.experience()?.appendChild(card)
 }
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ export function createProject(data = {}, onUpdate) {
   })
 
   card.querySelectorAll("input, textarea").forEach(i => i.addEventListener("input", () => onUpdate?.()))
-  containers.projects().appendChild(card)
+  containers.projects()?.appendChild(card)
 }
 
 // ─── Certifications ───────────────────────────────────────────────────────────
@@ -262,7 +262,7 @@ export function createCertification(data = {}, onUpdate) {
   })
 
   card.querySelectorAll("input").forEach(i => i.addEventListener("input", () => onUpdate?.()))
-  containers.certifications().appendChild(card)
+  containers.certifications()?.appendChild(card)
 }
 
 // ─── Languages ────────────────────────────────────────────────────────────────
@@ -335,7 +335,7 @@ export function createLanguageItem(selectedLanguage = "English", selectedLevel =
   langSel.addEventListener("change",  () => onUpdate?.())
   levelSel.addEventListener("change", () => onUpdate?.())
 
-  containers.languages().appendChild(card)
+  containers.languages()?.appendChild(card)
 }
 
 // ─── Data Collectors ──────────────────────────────────────────────────────────

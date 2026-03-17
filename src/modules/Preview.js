@@ -9,7 +9,7 @@
 "use strict"
 
 import { escapeHtml, splitComma, $id } from "./Utils.js"
-import { currentLang }                  from "./I18n.js"
+import { currentLang, t }              from "./I18n.js"
 
 // ─── Preview element references ───────────────────────────────────────────────
 // Cached once — these elements never change between renders.
@@ -96,14 +96,15 @@ export function renderEducationPreview(data) {
   if (!valid.length) { hideSection("educationSection"); return }
   showSection("educationSection")
 
+  const presentText = currentLang === "ar" ? "حتى الآن" : "Present"
   valid.forEach(item => {
-    const endText = item.current ? "Present" : item.end
+    const endText = item.current ? presentText : item.end
     const date    = [item.start, endText].filter(Boolean).join(" – ")
     container.appendChild(makeResumeItem({
       titleLine: item.degree,
       subLine:   item.university,
       dateText:  date,
-      desc:      item.gpa ? `GPA: ${item.gpa}` : "",
+      desc:      item.gpa ? `${currentLang === "ar" ? "المعدل" : "GPA"}: ${item.gpa}` : "",
     }))
   })
 }
@@ -117,8 +118,9 @@ export function renderExperiencePreview(data) {
   if (!valid.length) { hideSection("experienceSection"); return }
   showSection("experienceSection")
 
+  const presentText = currentLang === "ar" ? "حتى الآن" : "Present"
   valid.forEach(item => {
-    const endText = item.current ? "Present" : item.end
+    const endText = item.current ? presentText : item.end
     const date    = [item.start, endText].filter(Boolean).join(" – ")
     container.appendChild(makeResumeItem({
       titleLine: item.title,
@@ -147,7 +149,8 @@ export function renderProjectsPreview(data) {
 
     if (item.url) {
       const a = document.createElement("a")
-      a.href   = escapeHtml(item.url)
+      // Use textContent-based assignment (not escapeHtml) — href is set via property, not innerHTML
+      a.href   = item.url
       a.target = "_blank"
       a.rel    = "noopener noreferrer"
       a.textContent = item.name

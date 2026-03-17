@@ -16,7 +16,7 @@
   <meta property="og:description" content="Build a professional ATS-friendly resume in minutes. Bilingual Arabic + English, AI-powered, with live preview and real PDF export." />
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://createcv.app/" />
-  <meta property="og:image"       content="https://createcv.app/assets/og-image.png" />
+  <meta property="og:image"       content="https://createcv.app/assets/og-image.svg" />
   <meta property="og:image:width"  content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale"      content="en_US" />
@@ -26,11 +26,11 @@
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="CreateCV | Professional ATS Resume Builder" />
   <meta name="twitter:description" content="Build ATS-friendly bilingual resumes in minutes. AI analysis, live preview, PDF export." />
-  <meta name="twitter:image"       content="https://createcv.app/assets/og-image.png" />
+  <meta name="twitter:image"       content="https://createcv.app/assets/og-image.svg" />
 
   <!-- Icons / PWA -->
   <link rel="icon"             href="/favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.svg" />
   <link rel="manifest"         href="/manifest.json" />
 
   <!-- Fonts: preconnect then load with display=swap -->
@@ -238,23 +238,23 @@
               <div class="field">
                 <label id="labelFullName" for="fullName">Full Name</label>
                 <input id="fullName" type="text" placeholder="Enter your full name"
-                       autocomplete="name" aria-required="true" />
+                       autocomplete="name" aria-required="true" maxlength="100" />
               </div>
               <div class="field">
                 <label id="labelTargetRole" for="targetRole">Target Role</label>
-                <input id="targetRole" type="text" placeholder="e.g. Software Engineer" />
+                <input id="targetRole" type="text" placeholder="e.g. Software Engineer" maxlength="100" />
               </div>
               <div class="field">
                 <label id="labelEmail" for="email">Email</label>
-                <input id="email" type="email" placeholder="name@example.com" autocomplete="email" />
+                <input id="email" type="email" placeholder="name@example.com" autocomplete="email" maxlength="120" />
               </div>
               <div class="field">
                 <label id="labelPhone" for="phone">Phone</label>
-                <input id="phone" type="tel" placeholder="+966 5X XXX XXXX" autocomplete="tel" />
+                <input id="phone" type="tel" placeholder="+966 5X XXX XXXX" autocomplete="tel" maxlength="30" />
               </div>
               <div class="field">
                 <label id="labelLocation" for="location">Location</label>
-                <input id="location" type="text" placeholder="Saudi Arabia" />
+                <input id="location" type="text" placeholder="Saudi Arabia" maxlength="100" />
               </div>
               <div class="field">
                 <label id="labelProfileType" for="profileType">Profile Type</label>
@@ -265,16 +265,16 @@
               </div>
               <div class="field">
                 <label id="labelLinkedin" for="linkedin">LinkedIn</label>
-                <input id="linkedin" type="url" placeholder="linkedin.com/in/yourname" />
+                <input id="linkedin" type="text" placeholder="linkedin.com/in/yourname" maxlength="200" />
               </div>
               <div class="field">
                 <label id="labelGithub" for="github">GitHub / Portfolio</label>
-                <input id="github" type="url" placeholder="github.com/yourname" />
+                <input id="github" type="text" placeholder="github.com/yourname" maxlength="200" />
               </div>
             </div>
             <div class="field">
               <label id="labelSummary" for="summary">Professional Summary</label>
-              <textarea id="summary" rows="4"
+              <textarea id="summary" rows="4" maxlength="800"
                 placeholder="Write a concise summary about your background, strengths, and career focus."></textarea>
               <small id="summaryHint">Keep it clear, direct, and relevant to the target job.</small>
             </div>
@@ -323,7 +323,7 @@
             </div>
             <div class="field">
               <label id="labelSkills" for="skills">Skills</label>
-              <textarea id="skills" rows="2" placeholder="JavaScript, React, Node.js, Python, SQL..."></textarea>
+              <textarea id="skills" rows="2" maxlength="500" placeholder="JavaScript, React, Node.js, Python, SQL..."></textarea>
               <small id="skillsHint">Separate each skill with a comma.</small>
             </div>
             <div class="field">

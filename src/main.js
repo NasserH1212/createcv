@@ -189,31 +189,46 @@ function applyTranslation(lang) {
  * @param {object} data
  */
 function restoreState(data) {
+  // Normalize share link compressed keys to full keys
+  const norm = {
+    name:     data.name     ?? data.n  ?? "",
+    role:     data.role     ?? data.r  ?? "",
+    email:    data.email    ?? data.e  ?? "",
+    phone:    data.phone    ?? data.p  ?? "",
+    location: data.location ?? data.l  ?? "",
+    linkedin: data.linkedin ?? data.li ?? "",
+    github:   data.github   ?? data.g  ?? "",
+    summary:  data.summary  ?? data.s  ?? "",
+    skills:   data.skills   ?? data.sk ?? "",
+    profileType: data.profileType ?? data.pt ?? "experienced",
+    template: data.template ?? data.tmpl ?? "classic",
+    lang:     data.lang     ?? "en",
+  }
+
   const simpleKeys = ["name","role","email","phone","location","linkedin","github","summary","skills"]
   simpleKeys.forEach(key => {
-    if (inputs[key] && data[key] !== undefined) inputs[key].value = data[key]
+    if (inputs[key] && norm[key]) inputs[key].value = norm[key]
   })
-  if (inputs.profileType && data.profileType) inputs.profileType.value = data.profileType
+  if (inputs.profileType && norm.profileType) inputs.profileType.value = norm.profileType
 
-  if (templateSelect && data.template) {
-    templateSelect.value = data.template
-    applyTemplate(data.template)
+  if (templateSelect && norm.template) {
+    templateSelect.value = norm.template
+    applyTemplate(norm.template)
   }
-  if (data.lang) applyTranslation(data.lang)
+  if (norm.lang) applyTranslation(norm.lang)
 
-  if (data.education?.length)      data.education.forEach(item => createEducation(item, updateAllDebounced))
-  if (data.experience?.length)     data.experience.forEach(item => createExperience(item, updateAllDebounced))
-  if (data.projects?.length)       data.projects.forEach(item => createProject(item, updateAllDebounced))
-  if (data.certifications?.length) data.certifications.forEach(item => createCertification(item, updateAllDebounced))
+  // Education (full key or share-link compressed key)
+  const eduData  = data.education      ?? data.edu  ?? []
+  const expData  = data.experience     ?? data.exp  ?? []
+  const projData = data.projects       ?? data.proj ?? []
+  const certData = data.certifications ?? data.cert ?? []
+  const langData = data.languages      ?? data.langs ?? data.languagesData ?? []
 
-  // edu key for share link (edu vs education)
-  if (data.edu?.length) data.edu.forEach(item => createEducation(item, updateAllDebounced))
-  if (data.exp?.length) data.exp.forEach(item => createExperience(item, updateAllDebounced))
-  if (data.proj?.length) data.proj.forEach(item => createProject(item, updateAllDebounced))
-  if (data.cert?.length) data.cert.forEach(item => createCertification(item, updateAllDebounced))
-
-  const langs = data.languagesData ?? data.langs ?? data.languages
-  if (langs?.length) langs.forEach(l => createLanguageItem(l.language, l.level, updateAllDebounced))
+  if (eduData.length)  eduData.forEach(item  => createEducation(item, updateAllDebounced))
+  if (expData.length)  expData.forEach(item  => createExperience(item, updateAllDebounced))
+  if (projData.length) projData.forEach(item => createProject(item, updateAllDebounced))
+  if (certData.length) certData.forEach(item => createCertification(item, updateAllDebounced))
+  if (langData.length) langData.forEach(l    => createLanguageItem(l.language, l.level, updateAllDebounced))
 }
 
 // ─── Mobile Preview Toggle ────────────────────────────────────────────────────
@@ -246,9 +261,9 @@ document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return
   const aiPanel    = $id("aiPanel")
   const shareModal = $id("shareModal")
+  // Confirm dialog handles its own Escape key internally — no need to handle it here
   if (aiPanel?.classList.contains("open"))          { closeAIPanel(); return }
   if (!shareModal?.classList.contains("hidden"))     { $id("shareCloseBtn")?.click(); return }
-  if (!$id("confirmDialog")?.classList.contains("hidden")) { $id("confirmCancelBtn")?.click() }
 })
 
 // ─── Application Bootstrap ────────────────────────────────────────────────────
@@ -283,11 +298,13 @@ function init() {
   })
 
   // 6. Section add buttons
-  $id("addEducationBtn")?.addEventListener("click",    () => { createEducation({},    updateAllDebounced); updateAllDebounced() })
-  $id("addExperienceBtn")?.addEventListener("click",   () => { createExperience({},   updateAllDebounced); updateAllDebounced() })
-  $id("addProjectBtn")?.addEventListener("click",      () => { createProject({},      updateAllDebounced); updateAllDebounced() })
-  $id("addCertificationBtn")?.addEventListener("click",() => { createCertification({},updateAllDebounced); updateAllDebounced() })
-  $id("addLanguageBtn")?.addEventListener("click",     () => { createLanguageItem(undefined, undefined, updateAllDebounced); updateAllDebounced() })
+  // Wrapper that triggers both preview update and autosave on card changes
+  const onCardChange = () => { updateAllDebounced(); scheduleAutosave() }
+  $id("addEducationBtn")?.addEventListener("click",    () => { createEducation({},    onCardChange); onCardChange() })
+  $id("addExperienceBtn")?.addEventListener("click",   () => { createExperience({},   onCardChange); onCardChange() })
+  $id("addProjectBtn")?.addEventListener("click",      () => { createProject({},      onCardChange); onCardChange() })
+  $id("addCertificationBtn")?.addEventListener("click",() => { createCertification({},onCardChange); onCardChange() })
+  $id("addLanguageBtn")?.addEventListener("click",     () => { createLanguageItem(undefined, undefined, onCardChange); onCardChange() })
 
   // 7. Template switcher
   templateSelect?.addEventListener("change", () => {
@@ -321,8 +338,21 @@ function init() {
     })
     if (confirmed) {
       clearData()
+      // Programmatic reset — no location.reload()
+      Object.values(inputs).forEach(input => {
+        if (input) input.value = ""
+      })
+      if (inputs.profileType) inputs.profileType.value = "experienced"
+      if (templateSelect) {
+        templateSelect.value = "classic"
+        applyTemplate("classic")
+      }
+      // Clear all dynamic card containers
+      ;["educationContainer","experienceContainer","projectsContainer",
+        "certificationsContainer","languagesContainer"
+      ].forEach(id => { const el = $id(id); if (el) el.innerHTML = "" })
+      updateAll()
       showToast(tr.toastCleared, "info")
-      setTimeout(() => location.reload(), 600)
     }
   })
 

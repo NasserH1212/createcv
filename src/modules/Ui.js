@@ -93,7 +93,12 @@ export function showConfirm({ title, body, confirmLabel, cancelLabel, variant = 
     const okBtn     = $id("confirmOkBtn")
     const cancelBtn = $id("confirmCancelBtn")
 
+    function onKey(e) {
+      if (e.key === "Escape") cleanup(false)
+    }
+
     const cleanup = (result) => {
+      document.removeEventListener("keydown", onKey)
       overlay.remove()
       dialog.remove()
       resolve(result)
@@ -102,10 +107,7 @@ export function showConfirm({ title, body, confirmLabel, cancelLabel, variant = 
     okBtn.addEventListener("click",     () => cleanup(true))
     cancelBtn.addEventListener("click", () => cleanup(false))
     overlay.addEventListener("click",   () => cleanup(false))
-
-    document.addEventListener("keydown", function onKey(e) {
-      if (e.key === "Escape") { cleanup(false); document.removeEventListener("keydown", onKey) }
-    })
+    document.addEventListener("keydown", onKey)
 
     // Focus the cancel button by default (safer UX for destructive actions)
     requestAnimationFrame(() => cancelBtn.focus())

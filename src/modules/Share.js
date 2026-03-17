@@ -10,8 +10,7 @@
 
 import { $id }           from "./Utils.js"
 import { t, currentLang } from "./I18n.js"
-import { showToast }      from "./Ui.js"
-import { openModal, closeModal, createFocusTrap } from "./Ui.js"
+import { showToast, openModal, closeModal, createFocusTrap } from "./Ui.js"
 
 let focusTrap = null
 
@@ -23,6 +22,9 @@ let focusTrap = null
  * @param {object} state
  * @returns {string} — the full shareable URL
  */
+// Maximum safe URL length (most browsers support ~8000, but some services truncate at 2048)
+const MAX_URL_LENGTH = 8000
+
 export function generateShareLink(state) {
   try {
     const payload = {
@@ -46,7 +48,13 @@ export function generateShareLink(state) {
     }
     const json    = JSON.stringify(payload)
     const encoded = btoa(unescape(encodeURIComponent(json)))
-    return `${window.location.origin}${window.location.pathname}?cv=${encoded}`
+    const url = `${window.location.origin}${window.location.pathname}?cv=${encoded}`
+
+    if (url.length > MAX_URL_LENGTH) {
+      console.warn(`[Share] URL length (${url.length}) exceeds safe limit`)
+    }
+
+    return url
   } catch (e) {
     console.error("[Share] Encode error:", e)
     return window.location.href
@@ -115,7 +123,12 @@ function openShareModal(state) {
 
   if (!focusTrap && el.modal) focusTrap = createFocusTrap(el.modal)
   focusTrap?.activate()
-  openModal(el.modal, el.overlay, el.closeBtn)
+
+  // Share modal uses "hidden" class pattern — remove it to show
+  el.modal?.classList.remove("hidden")
+  el.overlay?.classList.remove("hidden")
+  document.body.style.overflow = "hidden"
+  requestAnimationFrame(() => (el.closeBtn ?? el.modal)?.focus())
 
   showToast(tr.toastShareOpened, "info")
 }
@@ -123,7 +136,12 @@ function openShareModal(state) {
 function closeShareModal() {
   const el = getEls()
   focusTrap?.deactivate()
-  closeModal(el.modal, el.overlay, el.openBtn)
+
+  // Share modal uses "hidden" class pattern — add it back to hide
+  el.modal?.classList.add("hidden")
+  el.overlay?.classList.add("hidden")
+  document.body.style.overflow = ""
+  el.openBtn?.focus()
 }
 
 async function copyLink() {
