@@ -47,11 +47,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "https://cdnjs.cloudflare.com"],
+      scriptSrc:   ["'self'", "https://cdnjs.cloudflare.com", "https://www.googletagmanager.com", "'unsafe-inline'"],
       styleSrc:    ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc:     ["'self'", "https://fonts.gstatic.com"],
-      connectSrc:  ["'self'", "https://cdnjs.cloudflare.com"],
-      imgSrc:      ["'self'", "data:", "blob:"],
+      connectSrc:  ["'self'", "https://cdnjs.cloudflare.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"],
+      imgSrc:      ["'self'", "data:", "blob:", "https://www.googletagmanager.com"],
       frameSrc:    ["'none'"],
       objectSrc:   ["'none'"],
     },
