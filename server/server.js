@@ -499,6 +499,166 @@ app.post("/api/generate-description", aiLimiter, async (req, res) => {
   }
 })
 
+// ─── AI Onboarding Starter ───────────────────────────────────────────────
+
+function buildOnboardingPrompt(data, lang) {
+  const isAr = lang === "ar"
+  const context = [
+    `Target Role: ${data.role}`,
+    `Profile Type: ${data.profileType === "graduate" ? "Fresh Graduate" : "Experienced Professional"}`,
+    data.name ? `Name: ${data.name}` : "",
+  ].filter(Boolean).join("\n")
+
+  if (isAr) {
+    return `أنت كاتب سير ذاتية محترف. أنشئ محتوى أولي لسيرة ذاتية بناءً على المعطيات التالية.
+
+${context}
+
+أنشئ JSON فقط بالشكل التالي بدون أي نص إضافي:
+{
+  "summary": "<ملخص مهني من 2-3 جمل>",
+  "skills": "<مهارات مناسبة للوظيفة مفصولة بفواصل، 8-12 مهارة>",
+  "experience": [{"title": "<المسمى الوظيفي>", "company": "<اسم شركة مناسب>", "desc": "<3 نقاط إنجاز مفصولة بسطر جديد>"}],
+  "education": [{"degree": "<درجة مناسبة>", "university": "<جامعة>"}]
+}`
+  }
+
+  return `You are a professional resume writer. Generate starter content for a resume based on:
+
+${context}
+
+Return ONLY JSON — no extra text, no markdown:
+{
+  "summary": "<2-3 sentence professional summary>",
+  "skills": "<relevant skills comma-separated, 8-12 skills>",
+  "experience": [{"title": "<job title>", "company": "<realistic company name>", "desc": "<3 achievement bullet points separated by newlines>"}],
+  "education": [{"degree": "<appropriate degree>", "university": "<university name>"}]
+}`
+}
+
+function getOnboardingStub(data, lang) {
+  const isAr = lang === "ar"
+  const isGrad = data.profileType === "graduate"
+  const role = data.role || (isAr ? "مهندس برمجيات" : "Software Engineer")
+
+  if (isAr) {
+    return {
+      summary: isGrad
+        ? `خريج جديد متحمس في مجال ${role} يبحث عن فرصة لتطبيق المهارات الأكاديمية في بيئة عمل احترافية. يتميز بالقدرة على التعلم السريع والعمل ضمن فريق.`
+        : `محترف ${role} ذو خبرة في تطوير وتنفيذ الحلول التقنية. يتميز بالقدرة على قيادة الفرق وتحقيق الأهداف بكفاءة عالية.`,
+      skills: isGrad
+        ? "Python, JavaScript, HTML, CSS, Git, SQL, Microsoft Office, التواصل, العمل الجماعي, حل المشكلات"
+        : "إدارة المشاريع, التخطيط الاستراتيجي, القيادة, التحليل, Python, JavaScript, SQL, Docker, Git, Agile",
+      experience: isGrad ? [] : [{
+        title: role,
+        company: "شركة التقنية المتقدمة",
+        desc: "قاد تطوير أنظمة تقنية رفعت الكفاءة التشغيلية بنسبة 30%\nأشرف على فريق من 4 أعضاء وحقق تسليم المشاريع في الوقت المحدد\nحسّن العمليات الداخلية مما وفّر 20 ساعة عمل أسبوعياً"
+      }],
+      education: [{ degree: isGrad ? "بكالوريوس علوم الحاسب" : "بكالوريوس", university: "جامعة الملك سعود" }],
+    }
+  }
+
+  return {
+    summary: isGrad
+      ? `Motivated ${role} graduate eager to apply academic knowledge in a professional environment. Strong analytical skills with a passion for continuous learning and collaborative problem-solving.`
+      : `Results-driven ${role} with proven experience in delivering high-impact solutions. Skilled in leading cross-functional teams and driving projects from concept to completion.`,
+    skills: isGrad
+      ? "Python, JavaScript, HTML, CSS, Git, SQL, Microsoft Office, Communication, Teamwork, Problem Solving"
+      : "Project Management, Strategic Planning, Leadership, Analysis, Python, JavaScript, SQL, Docker, Git, Agile",
+    experience: isGrad ? [] : [{
+      title: role,
+      company: "Tech Solutions Inc.",
+      desc: "Led development of technical systems improving operational efficiency by 30%\nManaged a team of 4, consistently delivering projects on time and within budget\nStreamlined internal processes, saving 20+ hours per week across the department"
+    }],
+    education: [{ degree: isGrad ? "Bachelor of Computer Science" : "Bachelor's Degree", university: "University" }],
+  }
+}
+
+app.post("/api/generate-onboarding", aiLimiter, async (req, res) => {
+  try {
+    const { lang, onboardingData } = req.body || {}
+    const safeLang = ["en", "ar"].includes(lang) ? lang : "en"
+
+    if (!onboardingData || typeof onboardingData !== "object") {
+      return res.status(400).json({ error: "onboardingData is required." })
+    }
+
+    const sanitized = {
+      name: sanitizeString(onboardingData.name, 100),
+      role: sanitizeString(onboardingData.role, 120),
+      profileType: ["graduate", "experienced"].includes(onboardingData.profileType)
+        ? onboardingData.profileType : "experienced",
+    }
+
+    if (!sanitized.role) {
+      return res.json(getOnboardingStub(sanitized, safeLang))
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return res.json(getOnboardingStub(sanitized, safeLang))
+    }
+
+    const prompt = buildOnboardingPrompt(sanitized, safeLang)
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 600,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      console.error(`[AI-Onboard] Anthropic API error ${response.status}`)
+      return res.json(getOnboardingStub(sanitized, safeLang))
+    }
+
+    const aiData  = await response.json()
+    const rawText = aiData.content?.map(b => b.text || "").join("") || ""
+    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
+
+    let parsed
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch {
+      console.error("[AI-Onboard] JSON parse failed")
+      return res.json(getOnboardingStub(sanitized, safeLang))
+    }
+
+    // Normalize
+    const result = {
+      summary: sanitizeString(String(parsed.summary || ""), 500),
+      skills: sanitizeString(String(parsed.skills || ""), 500),
+      experience: Array.isArray(parsed.experience)
+        ? parsed.experience.slice(0, 3).map(e => ({
+            title: sanitizeString(String(e.title || ""), 120),
+            company: sanitizeString(String(e.company || ""), 120),
+            desc: sanitizeString(String(e.desc || ""), 500),
+          }))
+        : [],
+      education: Array.isArray(parsed.education)
+        ? parsed.education.slice(0, 2).map(e => ({
+            degree: sanitizeString(String(e.degree || ""), 120),
+            university: sanitizeString(String(e.university || ""), 120),
+          }))
+        : [],
+    }
+
+    return res.json(result)
+
+  } catch (err) {
+    console.error("[AI-Onboard] Error:", err)
+    return res.status(500).json({ error: "Internal server error." })
+  }
+})
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({

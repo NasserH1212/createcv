@@ -87,6 +87,92 @@
   <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
   <!-- ═══════════════════════════════════════════════════════════
+       ONBOARDING WIZARD (first visit only)
+  ════════════════════════════════════════════════════════════ -->
+  <div id="onboardingOverlay" class="onboarding-overlay hidden" aria-hidden="true">
+    <div class="onboarding-wizard" role="dialog" aria-modal="true" aria-labelledby="wizardTitle">
+
+      <!-- Step 1: Language -->
+      <div id="wizardStep1" class="wizard-step wizard-step--active">
+        <div class="wizard-icon">🌐</div>
+        <h2 id="wizardTitle">Welcome to CreateCV</h2>
+        <p class="wizard-subtitle">Choose your preferred language to get started</p>
+        <p class="wizard-subtitle-ar">اختر لغتك المفضلة للبدء</p>
+        <div class="wizard-lang-buttons">
+          <button type="button" class="wizard-lang-btn" data-wizard-lang="en">
+            <span class="wizard-lang-flag">EN</span>
+            <span>English</span>
+          </button>
+          <button type="button" class="wizard-lang-btn" data-wizard-lang="ar">
+            <span class="wizard-lang-flag">ع</span>
+            <span>العربية</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Basic Info -->
+      <div id="wizardStep2" class="wizard-step">
+        <div class="wizard-progress">
+          <div class="wizard-progress-bar" style="width: 50%"></div>
+        </div>
+        <div class="wizard-icon">👤</div>
+        <h2 id="wizardStep2Title">Tell us about yourself</h2>
+        <p id="wizardStep2Subtitle" class="wizard-subtitle">Just the basics — you can edit everything later</p>
+        <div class="wizard-fields">
+          <div class="wizard-field">
+            <label id="wizardLabelName" for="wizardName">Your Name</label>
+            <input id="wizardName" type="text" placeholder="Enter your full name" maxlength="100" autocomplete="name" />
+          </div>
+          <div class="wizard-field">
+            <label id="wizardLabelRole" for="wizardRole">Target Job Title</label>
+            <input id="wizardRole" type="text" placeholder="e.g. Software Engineer" maxlength="100" />
+          </div>
+          <div class="wizard-field">
+            <label id="wizardLabelProfile">I am a...</label>
+            <div class="wizard-profile-buttons">
+              <button type="button" class="wizard-profile-btn wizard-profile-btn--active" data-profile="experienced">
+                <span class="wizard-profile-icon">💼</span>
+                <span id="wizardProfileExp">Experienced Professional</span>
+              </button>
+              <button type="button" class="wizard-profile-btn" data-profile="graduate">
+                <span class="wizard-profile-icon">🎓</span>
+                <span id="wizardProfileGrad">Fresh Graduate</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="wizard-actions">
+          <button type="button" id="wizardBackBtn" class="btn btn-soft wizard-back-btn">Back</button>
+          <button type="button" id="wizardNextBtn" class="btn btn-primary wizard-next-btn">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Ready -->
+      <div id="wizardStep3" class="wizard-step">
+        <div class="wizard-progress">
+          <div class="wizard-progress-bar" style="width: 100%"></div>
+        </div>
+        <div class="wizard-icon wizard-icon--big">🚀</div>
+        <h2 id="wizardStep3Title">You're all set!</h2>
+        <p id="wizardStep3Subtitle" class="wizard-subtitle">Choose how you'd like to start building your resume</p>
+        <div class="wizard-start-buttons">
+          <button type="button" id="wizardStartScratch" class="wizard-start-btn wizard-start-btn--secondary">
+            <span class="wizard-start-icon">📝</span>
+            <span id="wizardStartScratchLabel">Start from Scratch</span>
+            <small id="wizardStartScratchDesc">Fill in your details manually</small>
+          </button>
+          <button type="button" id="wizardStartAI" class="wizard-start-btn wizard-start-btn--primary">
+            <span class="wizard-start-icon">✦</span>
+            <span id="wizardStartAILabel">Let AI Help Me Start</span>
+            <small id="wizardStartAIDesc">AI will create a starter template based on your role</small>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
        AI PANEL (slide-in from right / left for RTL)
   ════════════════════════════════════════════════════════════ -->
   <aside id="aiPanel" class="ai-panel" role="dialog" aria-modal="true" aria-labelledby="aiPanelTitle">

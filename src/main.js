@@ -20,6 +20,7 @@ import { calculateATSScore }             from "./modules/Ats.js"
 import { exportPDF }                     from "./modules/Pdf.js"
 import { initAIPanel, analyzeResume, openAIPanel, closeAIPanel } from "./modules/Ai.js"
 import { initShare, decodeShareLink }    from "./modules/Share.js"
+import { hasCompletedOnboarding, initOnboarding } from "./modules/Onboarding.js"
 import {
   createEducation, createExperience, createProject, createCertification, createLanguageItem,
   getEducationData, getExperienceData, getProjectsData, getCertificationsData, getLanguagesData,
@@ -266,6 +267,94 @@ document.addEventListener("keydown", e => {
   if (!shareModal?.classList.contains("hidden"))     { $id("shareCloseBtn")?.click(); return }
 })
 
+// ─── Onboarding AI Helper ─────────────────────────────────────────────────────
+
+async function handleOnboardingAI(data) {
+  const { name, role, profileType, lang } = data
+
+  // Fill basic fields immediately
+  if (inputs.name && name) inputs.name.value = name
+  if (inputs.role && role) inputs.role.value = role
+  if (inputs.profileType) inputs.profileType.value = profileType
+
+  applyTranslation(lang)
+  showToast(lang === "ar" ? "جاري إنشاء محتوى بالذكاء الاصطناعي..." : "AI is generating your starter content...", "info", 4000)
+
+  try {
+    const res = await fetch("/api/generate-onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lang,
+        onboardingData: { name, role, profileType },
+      }),
+    })
+
+    if (!res.ok) throw new Error("API error")
+    const result = await res.json()
+
+    // Fill in AI-generated content
+    if (inputs.summary && result.summary) inputs.summary.value = result.summary
+    if (inputs.skills && result.skills) inputs.skills.value = result.skills
+
+    const onCardChange = () => { updateAllDebounced(); scheduleAutosave() }
+
+    if (result.experience?.length) {
+      result.experience.forEach(exp => {
+        createExperience({
+          title: exp.title || "",
+          company: exp.company || "",
+          desc: exp.desc || "",
+        }, onCardChange)
+      })
+    }
+
+    if (result.education?.length) {
+      result.education.forEach(edu => {
+        createEducation({
+          degree: edu.degree || "",
+          university: edu.university || "",
+        }, onCardChange)
+      })
+    }
+
+    // Seed default languages
+    createLanguageItem("Arabic",  "Native",       onCardChange)
+    createLanguageItem("English", "Intermediate", onCardChange)
+
+    updateAll()
+    scheduleAutosave()
+    showToast(lang === "ar" ? "تم إنشاء سيرتك الأولية! عدّل البيانات حسب رغبتك" : "Your starter resume is ready! Edit the details to match your experience.", "success", 5000)
+
+  } catch (err) {
+    console.error("[Onboarding AI]", err)
+    // Fallback — just seed languages
+    createLanguageItem("Arabic",  "Native",       () => { updateAllDebounced(); scheduleAutosave() })
+    createLanguageItem("English", "Intermediate", () => { updateAllDebounced(); scheduleAutosave() })
+    updateAll()
+    showToast(t().toastAnalysisError, "error")
+  }
+}
+
+function handleOnboardingScratch(data) {
+  const { name, role, profileType, lang } = data
+
+  if (inputs.name && name) inputs.name.value = name
+  if (inputs.role && role) inputs.role.value = role
+  if (inputs.profileType) inputs.profileType.value = profileType
+
+  applyTranslation(lang)
+
+  // Seed default languages
+  const onCardChange = () => { updateAllDebounced(); scheduleAutosave() }
+  createLanguageItem("Arabic",  "Native",       onCardChange)
+  createLanguageItem("English", "Intermediate", onCardChange)
+
+  updateAll()
+  scheduleAutosave()
+  showToast(lang === "ar" ? "مرحباً! ابدأ بملء بياناتك" : "Welcome! Start filling in your details.", "success")
+}
+
 // ─── Application Bootstrap ────────────────────────────────────────────────────
 
 function init() {
@@ -279,14 +368,25 @@ function init() {
     const saved = loadData()
     if (saved) {
       restoreState(saved)
+    } else if (!hasCompletedOnboarding()) {
+      // 3. First visit — show onboarding wizard
+      initOnboarding({
+        onComplete(data) {
+          if (data.useAI) {
+            handleOnboardingAI(data)
+          } else {
+            handleOnboardingScratch(data)
+          }
+        },
+      })
     } else {
-      // 3. First visit — seed default languages
+      // 4. Onboarded before but cleared data — seed defaults
       createLanguageItem("Arabic",  "Native",       updateAllDebounced)
       createLanguageItem("English", "Intermediate", updateAllDebounced)
     }
   }
 
-  // 4. Initial render
+  // 5. Initial render
   updateAll()
 
   // 5. Wire static input listeners
