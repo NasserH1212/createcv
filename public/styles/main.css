@@ -632,6 +632,106 @@ button, input, textarea, select { font: inherit; }
 .score-hint { color: var(--color-muted); font-size: .78rem; }
 
 /* ═══════════════════════════════════════════════
+   14b. RESUME COMPLETION PROGRESS
+═══════════════════════════════════════════════ */
+.progress-section {
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.progress-label {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+.progress-value {
+  font-size: .95rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  transition: color .4s;
+}
+.progress-value--great { color: var(--color-success); }
+.progress-value--good  { color: var(--color-primary); }
+.progress-value--poor  { color: var(--color-warning); }
+
+.progress-track {
+  height: 10px;
+  background: var(--color-line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0;
+  transition: width .6s cubic-bezier(.4,0,.2,1), background .4s;
+  background: linear-gradient(90deg, var(--color-warning), var(--color-primary));
+}
+.progress-fill--great {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+}
+.progress-fill--good {
+  background: linear-gradient(90deg, var(--color-warning), var(--color-primary));
+}
+.progress-fill--poor {
+  background: linear-gradient(90deg, var(--color-danger), var(--color-warning));
+}
+
+.progress-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.progress-hint-icon { font-size: .9rem; flex-shrink: 0; }
+
+.progress-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.progress-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  transition: all .3s;
+}
+.progress-check--done {
+  background: #dcfce7;
+  color: #15803d;
+}
+.progress-check--pending {
+  background: var(--color-bg);
+  color: var(--color-muted);
+  border: 1px solid var(--color-line);
+}
+
+@media (prefers-color-scheme: dark) {
+  .progress-check--done {
+    background: #052e16;
+    color: #4ade80;
+  }
+}
+
+@media (max-width: 860px) {
+  .progress-section { padding: 14px 16px; }
+}
+
+/* ═══════════════════════════════════════════════
    15. FORM ELEMENTS
 ═══════════════════════════════════════════════ */
 .form-block {

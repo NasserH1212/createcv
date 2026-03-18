@@ -156,6 +156,22 @@ export const i18n = {
     aiWriteLimitReached:  "Daily AI limit reached — more coming soon!",
     aiWriteRemaining:     "remaining today",
 
+    // ── Progress Bar ────────────────────────────────────────
+    progressLabel:            "Resume Completion",
+    progressName:             "Name",
+    progressRole:             "Role",
+    progressSummary:          "Summary",
+    progressEducation:        "Education",
+    progressExperience:       "Experience",
+    progressSkills:           "Skills",
+    progressHintStart:        "Start by adding your name and target role",
+    progressHintSummary:      "Add a professional summary to stand out",
+    progressHintEducation:    "Add your education background",
+    progressHintExperience:   "Add work experience to boost your score",
+    progressHintSkills:       "List your skills — ATS systems scan for these",
+    progressHintAlmost:       "Almost there! Review and download your PDF",
+    progressHintComplete:     "Your resume is ready! Download it as PDF",
+
     // ── Onboarding Wizard ─────────────────────────────────
     wizardTitle:              "Welcome to CreateCV",
     wizardSubtitle:           "Choose your preferred language to get started",
@@ -318,6 +334,22 @@ export const i18n = {
     aiWriteError:         "فشل في إنشاء الوصف. حاول مرة أخرى.",
     aiWriteLimitReached:  "انتهت استخداماتك اليومية — المزيد قريباً!",
     aiWriteRemaining:     "متبقية اليوم",
+
+    // ── Progress Bar ────────────────────────────────────────
+    progressLabel:            "اكتمال السيرة الذاتية",
+    progressName:             "الاسم",
+    progressRole:             "الوظيفة",
+    progressSummary:          "الملخص",
+    progressEducation:        "التعليم",
+    progressExperience:       "الخبرة",
+    progressSkills:           "المهارات",
+    progressHintStart:        "ابدأ بإضافة اسمك والوظيفة المستهدفة",
+    progressHintSummary:      "أضف ملخصاً مهنياً للتميز",
+    progressHintEducation:    "أضف خلفيتك التعليمية",
+    progressHintExperience:   "أضف خبراتك العملية لرفع نقاطك",
+    progressHintSkills:       "أضف مهاراتك — أنظمة ATS تبحث عنها",
+    progressHintAlmost:       "أوشكت على الانتهاء! راجع وحمّل الـ PDF",
+    progressHintComplete:     "سيرتك جاهزة! حمّلها كملف PDF",
 
     // ── Onboarding Wizard ─────────────────────────────────
     wizardTitle:              "مرحباً بك في CreateCV",

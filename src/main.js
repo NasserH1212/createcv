@@ -78,10 +78,87 @@ function getState() {
   }
 }
 
+// ─── Progress Bar ─────────────────────────────────────────────────────────────
+
+const progressBar      = $id("progressBar")
+const progressValue    = $id("progressValue")
+const progressHintText = $id("progressHintText")
+const progressChecklist = $id("progressChecklist")
+const progressLabel    = $id("progressLabel")
+
+/**
+ * Calculates resume completion and returns { percent, checks, hint }.
+ * Each section has a weight — total = 100%.
+ */
+function calculateProgress(state) {
+  const tr = t()
+
+  const checks = [
+    { key: "name",       label: tr.progressName,       done: !!state.name?.trim() },
+    { key: "role",       label: tr.progressRole,       done: !!state.role?.trim() },
+    { key: "summary",    label: tr.progressSummary,    done: (state.summary?.trim().length || 0) >= 20 },
+    { key: "education",  label: tr.progressEducation,  done: (state.education?.length || 0) > 0 && !!state.education[0]?.degree },
+    { key: "experience", label: tr.progressExperience, done: (state.experience?.length || 0) > 0 && !!state.experience[0]?.title },
+    { key: "skills",     label: tr.progressSkills,     done: (state.skills?.trim().split(",").filter(s => s.trim()).length || 0) >= 3 },
+  ]
+
+  const doneCount = checks.filter(c => c.done).length
+  const percent = Math.round((doneCount / checks.length) * 100)
+
+  // Smart hint — suggest next incomplete section
+  let hint = tr.progressHintComplete
+  if (!checks[0].done || !checks[1].done) hint = tr.progressHintStart
+  else if (!checks[2].done) hint = tr.progressHintSummary
+  else if (!checks[3].done) hint = tr.progressHintEducation
+  else if (!checks[4].done) hint = tr.progressHintExperience
+  else if (!checks[5].done) hint = tr.progressHintSkills
+  else if (percent < 100)   hint = tr.progressHintAlmost
+
+  return { percent, checks, hint }
+}
+
+function updateProgressBar(state) {
+  const { percent, checks, hint } = calculateProgress(state)
+  const tr = t()
+
+  // Update label
+  if (progressLabel) progressLabel.textContent = tr.progressLabel
+
+  // Update percentage
+  if (progressValue) {
+    progressValue.textContent = `${percent}%`
+    progressValue.className = "progress-value" + (
+      percent >= 80 ? " progress-value--great" :
+      percent >= 50 ? " progress-value--good" :
+      " progress-value--poor"
+    )
+  }
+
+  // Update bar
+  if (progressBar) {
+    progressBar.style.width = `${percent}%`
+    progressBar.className = "progress-fill" + (
+      percent >= 80 ? " progress-fill--great" :
+      percent >= 50 ? " progress-fill--good" :
+      " progress-fill--poor"
+    )
+  }
+
+  // Update hint
+  if (progressHintText) progressHintText.textContent = hint
+
+  // Update checklist
+  if (progressChecklist) {
+    progressChecklist.innerHTML = checks.map(c =>
+      `<span class="progress-check ${c.done ? "progress-check--done" : "progress-check--pending"}">${c.done ? "✓" : "○"} ${c.label}</span>`
+    ).join("")
+  }
+}
+
 // ─── Core Update Cycle ────────────────────────────────────────────────────────
 
 /**
- * Main render cycle: collect state → render preview → update ATS bar.
+ * Main render cycle: collect state → render preview → update ATS bar → update progress.
  * Called on every user input (debounced).
  * Autosave is decoupled and runs on its own timer.
  */
@@ -90,6 +167,7 @@ function updateAll() {
   renderFullPreview(state)
   const score = calculateATSScore(state)
   updateATSBar(score, atsBar, atsValue, atsHint, scoreBox)
+  updateProgressBar(state)
 }
 
 const updateAllDebounced = debounce(updateAll, 120)
