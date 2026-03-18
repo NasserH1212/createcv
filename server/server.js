@@ -15,9 +15,15 @@ const path       = require("path")
 const app  = express()
 const PORT = process.env.PORT || 3001
 
+// Trust the first proxy (Render, Vercel, etc.) for correct IP and protocol
+app.set("trust proxy", 1)
+
 // ─── Allowed Origins ──────────────────────────────────────────────────────────
 const IS_DEV = process.env.NODE_ENV !== "production"
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "http://localhost:3001")
+const ALLOWED_ORIGINS = (
+  process.env.ALLOWED_ORIGINS ||
+  "https://createcvpro.com,https://www.createcvpro.com,http://localhost:3001"
+)
   .split(",")
   .map(o => o.trim())
 
@@ -77,16 +83,47 @@ const aiLimiter = rateLimit({
   },
 })
 
+// ─── Resolve static directories once at startup ─────────────────────────────
+const PUBLIC_DIR = path.join(__dirname, "..", "public")
+const SRC_DIR    = path.join(__dirname, "..", "src")
+
+// ─── Startup Diagnostics ─────────────────────────────────────────────────────
+const fs = require("fs")
+;(function checkPaths() {
+  const critical = [
+    [PUBLIC_DIR, "public/"],
+    [path.join(PUBLIC_DIR, "index.html"), "public/index.html"],
+    [SRC_DIR, "src/"],
+    [path.join(SRC_DIR, "main.js"), "src/main.js"],
+    [path.join(SRC_DIR, "modules", "Utils.js"), "src/modules/Utils.js"],
+  ]
+  console.log("\n📁 Static file check:")
+  critical.forEach(([abs, label]) => {
+    const ok = fs.existsSync(abs)
+    console.log(`   ${ok ? "✅" : "❌"} ${label} → ${abs}`)
+    if (!ok) console.error(`   ⚠️  MISSING: ${label} — this will break the app!`)
+  })
+})()
+
 // ─── Static Files ─────────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "..", "public"), {
-  maxAge: "1d",
+// Use short cache so redeployments take effect quickly
+const staticMaxAge = IS_DEV ? 0 : "2h"
+
+app.use(express.static(PUBLIC_DIR, {
+  maxAge: staticMaxAge,
   etag: true,
 }))
 
 // Serve src/ directory for ES module imports (referenced by index.html)
-app.use("/src", express.static(path.join(__dirname, "..", "src"), {
-  maxAge: "1d",
+app.use("/src", express.static(SRC_DIR, {
+  maxAge: staticMaxAge,
   etag: true,
+  // Ensure .js files get the correct MIME type for ES modules
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".js")) {
+      res.setHeader("Content-Type", "application/javascript; charset=UTF-8")
+    }
+  },
 }))
 
 // ─── Input Validation & Sanitization ─────────────────────────────────────────
@@ -326,11 +363,22 @@ app.get("/api/health", (req, res) => {
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  // SPA fallback — serve index.html for non-API routes
-  if (!req.path.startsWith("/api/")) {
-    return res.sendFile(path.join(__dirname, "..", "public", "index.html"))
+  // API routes → JSON 404
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "Not found." })
   }
-  res.status(404).json({ error: "Not found." })
+
+  // Static asset requests that weren't matched by express.static → real 404
+  // This prevents serving index.html (HTML) for missing .js/.css files,
+  // which would break ES module loading (browser refuses HTML as JavaScript)
+  const ext = path.extname(req.path).toLowerCase()
+  if (ext && ext !== ".html" && ext !== ".htm") {
+    console.warn(`[404] Static asset not found: ${req.path}`)
+    return res.status(404).type("text").send("Not found")
+  }
+
+  // SPA fallback — serve index.html for client-side routes
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"))
 })
 
 // ─── Global Error Handler ──────────────────────────────────────────────────────
