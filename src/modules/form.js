@@ -15,6 +15,7 @@
 
 import { escapeHtml, uid, $all } from "./Utils.js"
 import { t, currentLang }        from "./I18n.js"
+import { createAiWriteButton }   from "./AiWriter.js"
 
 // ─── Language option lists ────────────────────────────────────────────────────
 
@@ -196,9 +197,12 @@ export function createExperience(data = {}, onUpdate) {
   const isCurrent  = data.current === true || data.end === "Present"
   const currentChk = makeCurrentCheckbox(tr.currentJobLabel, endIn, isCurrent)
 
+  // AI Write button for description
+  const aiWriteEl = createAiWriteButton(descIn, onUpdate)
+
   const topGrid = makeGrid()
   topGrid.append(titleW, companyW, startW, endW)
-  card.append(topGrid, currentChk, descW)
+  card.append(topGrid, currentChk, descW, aiWriteEl)
 
   card.querySelector(".remove-btn").addEventListener("click", () => {
     card.remove()

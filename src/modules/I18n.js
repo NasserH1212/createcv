@@ -142,6 +142,20 @@ export const i18n = {
     toastAnalysisError:   "Analysis failed, please try again",
     toastPdfLibError:     "Failed to load PDF library",
 
+    // ── AI Writer ────────────────────────────────────────
+    aiWriteBtn:           "✦ Write with AI",
+    aiWriteJobTitle:      "Job Title",
+    aiWriteAchievement:   "Main achievement (brief)",
+    aiWriteYears:         "Years in role",
+    aiWriteGenerate:      "✦ Generate",
+    aiWriteCancel:        "Cancel",
+    aiWriteUse:           "✅ Use This",
+    aiWriteRetry:         "🔄 Try Again",
+    aiWriteLoading:       "Writing description...",
+    aiWriteError:         "Failed to generate description. Try again.",
+    aiWriteLimitReached:  "Daily AI limit reached — more coming soon!",
+    aiWriteRemaining:     "remaining today",
+
     // ── Confirm dialogs ───────────────────────────────────
     confirmClearTitle:    "Clear all data?",
     confirmClearBody:     "This will permanently delete everything you've entered. This cannot be undone.",
@@ -269,6 +283,20 @@ export const i18n = {
     toastSharedLoaded:    "✓ تم تحميل السيرة الذاتية من الرابط",
     toastAnalysisError:   "حدث خطأ أثناء التحليل، حاول مرة أخرى",
     toastPdfLibError:     "تعذر تحميل مكتبة PDF",
+
+    // ── AI Writer ────────────────────────────────────────
+    aiWriteBtn:           "✦ اكتب بالذكاء الاصطناعي",
+    aiWriteJobTitle:      "المسمى الوظيفي",
+    aiWriteAchievement:   "أهم إنجاز (باختصار)",
+    aiWriteYears:         "سنوات الخبرة",
+    aiWriteGenerate:      "✦ توليد",
+    aiWriteCancel:        "إلغاء",
+    aiWriteUse:           "✅ استخدم هذا",
+    aiWriteRetry:         "🔄 حاول مرة أخرى",
+    aiWriteLoading:       "جاري كتابة الوصف...",
+    aiWriteError:         "فشل في إنشاء الوصف. حاول مرة أخرى.",
+    aiWriteLimitReached:  "انتهت استخداماتك اليومية — المزيد قريباً!",
+    aiWriteRemaining:     "متبقية اليوم",
 
     confirmClearTitle:    "مسح جميع البيانات؟",
     confirmClearBody:     "سيتم حذف كل ما أدخلته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء.",

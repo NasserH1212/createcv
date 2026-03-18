@@ -352,6 +352,153 @@ app.post("/api/analyze-resume", aiLimiter, async (req, res) => {
   }
 })
 
+// ─── AI Description Writer ───────────────────────────────────────────────────
+
+/**
+ * Sanitizes the description-generation input.
+ * Only allows known keys with strict max lengths.
+ */
+function sanitizeDescInput(raw) {
+  if (!raw || typeof raw !== "object") return null
+  const jobTitle    = sanitizeString(raw.jobTitle,    120)
+  const achievement = sanitizeString(raw.achievement, 300)
+  const years       = sanitizeString(raw.years,        10)
+  if (!jobTitle) return null
+  return { jobTitle, achievement, years }
+}
+
+/**
+ * Builds the prompt for generating experience bullet points.
+ * Server-side only — client never sends a prompt.
+ */
+function buildDescriptionPrompt(data, lang) {
+  const isAr = lang === "ar"
+
+  const context = [
+    `Job Title: ${data.jobTitle}`,
+    data.achievement ? `Key Achievement: ${data.achievement}` : "",
+    data.years ? `Years in Role: ${data.years}` : "",
+  ].filter(Boolean).join("\n")
+
+  if (isAr) {
+    return `أنت كاتب سير ذاتية محترف ومتخصص في أنظمة ATS.
+
+المعطيات:
+${context}
+
+اكتب 3-4 نقاط إنجازات للسيرة الذاتية بالعربية.
+
+القواعد:
+- ابدأ كل نقطة بفعل إنجاز قوي
+- أضف أرقام وإحصائيات واقعية حيث أمكن
+- اجعل النقاط متوافقة مع أنظمة ATS
+- كل نقطة سطر واحد فقط
+- أرجع JSON فقط بالشكل: {"bullets":["نقطة 1","نقطة 2","نقطة 3"]}`
+  }
+
+  return `You are a professional ATS resume writer.
+
+Context:
+${context}
+
+Write 3-4 achievement bullet points for a resume.
+
+Rules:
+- Start each bullet with a strong action verb (Led, Developed, Increased, etc.)
+- Include realistic metrics and numbers where possible
+- Make bullets ATS-friendly with industry keywords
+- Each bullet is one concise line
+- Return ONLY JSON: {"bullets":["bullet 1","bullet 2","bullet 3"]}`
+}
+
+/**
+ * Normalizes the AI description output to a consistent shape.
+ */
+function normalizeDescResult(data) {
+  const bullets = Array.isArray(data?.bullets)
+    ? data.bullets.map(String).filter(Boolean).slice(0, 5).map(b => b.slice(0, 300))
+    : []
+  return { bullets }
+}
+
+function getDescStub(lang) {
+  const isAr = lang === "ar"
+  return normalizeDescResult({
+    bullets: isAr
+      ? [
+          "قاد تطوير نظام إدارة المحتوى مما أدى لزيادة الإنتاجية بنسبة 35%",
+          "أشرف على فريق من 5 مطورين وحقق تسليم المشاريع قبل الموعد بأسبوعين",
+          "حسّن أداء النظام وقلّل وقت الاستجابة بنسبة 40%",
+        ]
+      : [
+          "Led development of a content management system, increasing team productivity by 35%",
+          "Managed a team of 5 developers, delivering projects 2 weeks ahead of schedule",
+          "Optimized system performance, reducing response time by 40%",
+        ],
+  })
+}
+
+app.post("/api/generate-description", aiLimiter, async (req, res) => {
+  try {
+    const { lang, descInput } = req.body || {}
+    const safeLang = ["en", "ar"].includes(lang) ? lang : "en"
+
+    if (!descInput || typeof descInput !== "object") {
+      return res.status(400).json({ error: "descInput is required." })
+    }
+
+    const sanitized = sanitizeDescInput(descInput)
+    if (!sanitized) {
+      return res.status(400).json({ error: "Job title is required." })
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return res.json(getDescStub(safeLang))
+    }
+
+    const prompt = buildDescriptionPrompt(sanitized, safeLang)
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 500,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error(`[AI-Desc] Anthropic API error ${response.status}:`, errText)
+      return res.json(getDescStub(safeLang))
+    }
+
+    const aiData  = await response.json()
+    const rawText = aiData.content?.map(b => b.text || "").join("") || ""
+    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
+
+    let parsed
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch (parseErr) {
+      console.error("[AI-Desc] JSON parse failed:", parseErr.message, "| Raw:", rawText.slice(0, 200))
+      return res.json(getDescStub(safeLang))
+    }
+
+    return res.json(normalizeDescResult(parsed))
+
+  } catch (err) {
+    console.error("[AI-Desc] Unhandled error:", err)
+    return res.status(500).json({ error: "Internal server error." })
+  }
+})
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({

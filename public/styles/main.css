@@ -1141,7 +1141,77 @@ html[dir="rtl"] .confirm-actions { flex-direction: row-reverse; }
 }
 
 /* ═══════════════════════════════════════════════
-   24. PRINT STYLES
+   24. AI WRITER (inline experience description)
+═══════════════════════════════════════════════ */
+.ai-write-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ai-write-btn { font-size: .8rem; }
+.ai-write-counter {
+  font-size: .75rem;
+  color: var(--color-muted);
+}
+.ai-write-counter--empty { color: var(--color-danger); }
+
+.ai-write-form {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xs);
+  padding: 14px;
+  margin-top: 6px;
+  background: var(--color-surface);
+}
+.ai-write-fields { display: flex; flex-direction: column; gap: 10px; }
+.ai-write-fields .field { margin: 0; }
+.ai-write-fields label { font-size: .82rem; margin-bottom: 2px; }
+.ai-write-fields input {
+  padding: 8px 10px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xs);
+  font-size: .88rem;
+  width: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.ai-write-actions { display: flex; gap: 8px; margin-top: 12px; }
+.ai-write-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  color: var(--color-muted);
+  font-size: .88rem;
+}
+.ai-write-loading .ai-spinner { width: 24px; height: 24px; border-width: 3px; }
+
+.ai-write-result { margin-top: 10px; }
+.ai-write-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.ai-write-bullets li {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: rgba(124, 58, 237, .06);
+  border-radius: var(--radius-xs);
+  font-size: .88rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  border-left: 3px solid var(--color-ai);
+}
+[dir="rtl"] .ai-write-bullets li {
+  border-left: none;
+  border-right: 3px solid var(--color-ai);
+}
+.ai-write-result-actions { display: flex; gap: 8px; }
+
+/* ═══════════════════════════════════════════════
+   25. PRINT STYLES
 ═══════════════════════════════════════════════ */
 @media print {
   body { background: #fff; }
