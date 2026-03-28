@@ -102,6 +102,13 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
             overflow:   "visible",
           })
         }
+
+        // Force preview-panel visible — windowWidth (794px) triggers
+        // the ≤1200px media query which sets .preview-panel to display:none
+        const panel = el.closest(".preview-panel")
+        if (panel) {
+          panel.style.display = "block"
+        }
       },
     },
     jsPDF: {

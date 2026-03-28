@@ -196,6 +196,14 @@
           <button type="button" id="aiAnalyzeBtn" class="btn btn-ai-main">
             Analyze My Resume
           </button>
+          <div class="ai-optimize-section">
+            <div class="ai-optimize-divider"><span id="aiOptimizeDivider">or</span></div>
+            <label for="aiJobDesc" class="ai-optimize-label" id="aiOptimizeLabel">Paste a job description to optimize your CV</label>
+            <textarea id="aiJobDesc" class="ai-optimize-textarea" rows="5" placeholder="Paste the job description here..."></textarea>
+            <button type="button" id="aiOptimizeBtn" class="btn btn-ai-optimize">
+              🎯 Optimize CV for this Job
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -232,6 +240,7 @@
 
         <!-- Primary actions -->
         <button type="button" id="aiBtn"     class="btn btn-ai"    aria-label="Analyze with AI">✦ AI Analyze</button>
+        <button type="button" id="tailorBtn" class="btn btn-tailor" aria-label="Tailor for job">🎯 Tailor</button>
         <button type="button" id="shareBtn"  class="btn btn-share" aria-label="Share resume link">🔗 Share</button>
 
         <!-- Secondary actions -->
@@ -519,6 +528,44 @@
       </nav>
     </div>
   </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       JOB TAILOR MODAL
+  ════════════════════════════════════════════════════════════ -->
+  <div id="tailorModal" class="tailor-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tailorModalTitle">
+    <div class="tailor-modal-box">
+      <div class="tailor-modal-head">
+        <div class="tailor-modal-title">
+          <span aria-hidden="true">🎯</span>
+          <span id="tailorModalTitle">Tailor for Job</span>
+        </div>
+        <button type="button" id="tailorCloseBtn" class="modal-close-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="tailor-modal-body">
+        <!-- Input State -->
+        <div id="tailorInput">
+          <p id="tailorDesc" class="tailor-desc">Paste the job description below and AI will tailor your resume to match it.</p>
+          <div class="field">
+            <label id="tailorJobTitleLabel" for="tailorJobTitle">Job Title (optional)</label>
+            <input id="tailorJobTitle" type="text" placeholder="e.g. Senior Software Engineer" maxlength="150" />
+          </div>
+          <div class="field">
+            <label id="tailorJobDescLabel" for="tailorJobDesc">Job Description</label>
+            <textarea id="tailorJobDesc" rows="8" maxlength="3000" placeholder="Paste the full job description here..."></textarea>
+          </div>
+          <button type="button" id="tailorAnalyzeBtn" class="btn btn-ai-main">🎯 Tailor My Resume</button>
+        </div>
+        <!-- Loading State -->
+        <div id="tailorLoading" class="ai-loading hidden">
+          <div class="ai-spinner" role="status" aria-label="Loading"></div>
+          <p id="tailorLoadingText">Analyzing job requirements and tailoring your resume...</p>
+        </div>
+        <!-- Result State -->
+        <div id="tailorResult" class="tailor-result hidden" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+  <div id="tailorOverlay" class="modal-overlay hidden" aria-hidden="true"></div>
 
   <!-- ═══════════════════════════════════════════════════════════
        SHARE MODAL

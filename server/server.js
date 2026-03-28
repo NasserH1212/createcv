@@ -220,22 +220,37 @@ function buildPrompt(data, lang) {
   }, null, 2)
 
   if (isAr) {
-    return `أنت خبير متخصص في تحسين السيرة الذاتية وأنظمة التصفية الآلي ATS. حلل السيرة الذاتية التالية وأعطني تقييماً احترافياً.
+    return `أنت خبير متخصص في تحسين السيرة الذاتية وأنظمة التصفية الآلي ATS ومعيد كتابة محترف للسير الذاتية. حلل السيرة الذاتية التالية وأعطني تقييماً احترافياً مع إعادة كتابة محددة يمكن للمستخدم نسخها مباشرة.
 
 بيانات السيرة الذاتية:
 ${dataStr}
 
+التعليمات:
+- في "improvements": لا تقل أشياء عامة مثل "يمكن تحسينه". اقتبس النص الضعيف واشرح المشكلة بالتحديد.
+- في "suggestions": قدم نصوصاً محددة جاهزة للنسخ (مثل ملخص أفضل، نقاط خبرة أقوى).
+- في "rewrites": ابحث عن النصوص الضعيفة من السيرة (الملخص، نقاط الخبرة، وصف المشاريع) وأعد كتابتها بأسلوب احترافي متوافق مع ATS باستخدام أفعال إنجاز وأرقام. كل إعادة كتابة يجب أن تحتوي على "original" (النص الأصلي) و"improved" (النسخة المحسنة).
+- استخدم أفعال إنجاز قوية: قاد، طوّر، صمّم، حسّن، نفّذ، قلّل، زاد، أنشأ.
+- أضف أرقاماً ومقاييس حيث يكون ذلك منطقياً.
+
 أرجع JSON فقط بالشكل التالي، بدون أي نص إضافي:
-{"overallScore":<0-100>,"scoreComment":"<تعليق>","strengths":["<قوة>"],"improvements":["<تحسين>"],"atsIssues":["<مشكلة ATS>"],"suggestions":["<اقتراح>"]}`
+{"overallScore":<0-100>,"scoreComment":"<تعليق>","strengths":["<قوة>"],"improvements":["<مشكلة محددة مع اقتباس النص>"],"atsIssues":["<مشكلة ATS>"],"suggestions":["<اقتراح محدد وعملي>"],"rewrites":[{"original":"<النص الضعيف من السيرة>","improved":"<النسخة المحسنة المتوافقة مع ATS>"}]}`
   }
 
-  return `You are an expert ATS resume consultant. Analyze the resume data below and return professional feedback.
+  return `You are an expert ATS resume consultant and professional resume rewriter. Analyze the resume data below and return specific, actionable feedback with concrete rewrites the user can copy directly into their resume.
 
 Resume Data:
 ${dataStr}
 
+Instructions:
+- In "improvements": do NOT say vague things like "could be improved". Instead, quote the weak text and explain exactly what's wrong.
+- In "suggestions": give specific, copy-ready text the user can paste (e.g. a better summary, better bullet point).
+- In "rewrites": find weak lines from the resume (summary, experience bullets, project descriptions) and rewrite them into strong, ATS-friendly versions using action verbs and quantified achievements. Each rewrite must have "original" (the actual text from the resume) and "improved" (your rewritten version).
+- Use strong action verbs: Led, Developed, Engineered, Optimized, Implemented, Delivered, Reduced, Increased, Streamlined, Architected.
+- Add metrics/numbers where reasonable (e.g. "reducing load time by 40%", "serving 10K+ users").
+- Keep rewrites concise and professional — one line each, ready to paste into a resume.
+
 Return ONLY a JSON object — no extra text, no markdown fences:
-{"overallScore":<0-100>,"scoreComment":"<brief comment>","strengths":["<strength>"],"improvements":["<area to improve>"],"atsIssues":["<ATS issue>"],"suggestions":["<actionable tip>"]}`
+{"overallScore":<0-100>,"scoreComment":"<brief comment>","strengths":["<strength>"],"improvements":["<specific issue with quoted text>"],"atsIssues":["<ATS issue>"],"suggestions":["<specific actionable tip>"],"rewrites":[{"original":"<weak text from resume>","improved":"<rewritten ATS-optimized version>"}]}`
 }
 
 // ─── Output Normalizer ────────────────────────────────────────────────────────
@@ -243,6 +258,12 @@ Return ONLY a JSON object — no extra text, no markdown fences:
 function normalizeResult(data) {
   const toArray = (v) =>
     Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 8) : []
+  const toRewrites = (v) =>
+    Array.isArray(v)
+      ? v.filter(r => r && typeof r === "object" && r.original && r.improved)
+          .map(r => ({ original: sanitizeString(String(r.original), 500), improved: sanitizeString(String(r.improved), 500) }))
+          .slice(0, 8)
+      : []
   return {
     overallScore: Math.min(100, Math.max(0, Number(data?.overallScore) || 0)),
     scoreComment: sanitizeString(String(data?.scoreComment || ""), 300),
@@ -250,6 +271,7 @@ function normalizeResult(data) {
     improvements: toArray(data?.improvements),
     atsIssues:    toArray(data?.atsIssues),
     suggestions:  toArray(data?.suggestions),
+    rewrites:     toRewrites(data?.rewrites),
   }
 }
 
@@ -276,6 +298,20 @@ function getStubResult(lang) {
     suggestions: [
       isAr ? "خصص السيرة لكل وظيفة بشكل منفصل" : "Tailor your resume for each job application",
       isAr ? "استخدم أفعال إنجاز قوية في بداية كل نقطة" : "Start each bullet with a strong action verb",
+    ],
+    rewrites: [
+      {
+        original: isAr ? "عملت على تطوير مواقع الويب" : "Worked on developing websites",
+        improved: isAr
+          ? "طوّر وأطلق 3 مواقع ويب متجاوبة باستخدام React و Node.js، مما زاد تفاعل المستخدمين بنسبة 45%"
+          : "Developed and launched 3 responsive web applications using React and Node.js, increasing user engagement by 45%",
+      },
+      {
+        original: isAr ? "مسؤول عن إدارة الفريق" : "Responsible for managing the team",
+        improved: isAr
+          ? "قاد فريقاً من 5 مطورين باستخدام منهجية Agile، وسلّم المشاريع قبل الموعد بأسبوعين"
+          : "Led a cross-functional team of 5 developers using Agile methodology, delivering projects 2 weeks ahead of schedule",
+      },
     ],
   })
 }
@@ -321,7 +357,7 @@ app.post("/api/analyze-resume", aiLimiter, async (req, res) => {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 800,
+        max_tokens: 1500,
         messages: [{ role: "user", content: prompt }],
       }),
     })
@@ -655,6 +691,358 @@ app.post("/api/generate-onboarding", aiLimiter, async (req, res) => {
 
   } catch (err) {
     console.error("[AI-Onboard] Error:", err)
+    return res.status(500).json({ error: "Internal server error." })
+  }
+})
+
+// ─── AI Optimize for Job ─────────────────────────────────────────────────────
+
+function buildOptimizePrompt(resumeData, jobDescription, lang) {
+  const isAr = lang === "ar"
+
+  const resumeStr = JSON.stringify({
+    name: resumeData.name,
+    role: resumeData.role,
+    summary: resumeData.summary,
+    skills: resumeData.skills,
+    experience: resumeData.experience,
+    projects: resumeData.projects,
+  }, null, 2)
+
+  if (isAr) {
+    return `أنت خبير في تحسين السير الذاتية لتتوافق مع وظائف محددة وأنظمة ATS.
+
+وصف الوظيفة:
+${jobDescription}
+
+بيانات السيرة الذاتية الحالية:
+${resumeStr}
+
+التعليمات:
+- استخرج الكلمات المفتاحية والمهارات المطلوبة من وصف الوظيفة.
+- حدد المهارات الناقصة من السيرة الذاتية.
+- أعد كتابة النقاط الضعيفة من الخبرات والمشاريع لتتوافق مع الوظيفة، باستخدام أفعال إنجاز وأرقام.
+- اكتب ملخصاً مهنياً محسناً يتوافق مع الوظيفة.
+- لا تخترع خبرات وهمية — حسّن ما هو موجود فقط.
+
+أرجع JSON فقط بالشكل التالي، بدون أي نص إضافي:
+{"keywords":["كلمة مفتاحية من الوظيفة"],"rewrites":[{"original":"النص الأصلي من السيرة","improved":"النسخة المحسنة المتوافقة مع الوظيفة"}],"missingSkills":["مهارة ناقصة"],"summary":"ملخص مهني محسّن يتوافق مع الوظيفة"}`
+  }
+
+  return `You are an expert ATS resume optimizer. Your job is to optimize a resume to match a specific job posting.
+
+Job Description:
+${jobDescription}
+
+Current Resume Data:
+${resumeStr}
+
+Instructions:
+- Extract the key skills, technologies, and keywords the job requires.
+- Identify skills the resume is missing for this job.
+- Find weak bullet points in experience/projects and rewrite them to align with the job requirements. Use strong action verbs and quantified results. Each rewrite must have "original" (exact text from resume) and "improved" (optimized version targeting this job).
+- Write an optimized professional summary tailored to this specific job.
+- Do NOT invent fake experience — only improve what exists.
+- Focus rewrites on the most impactful changes for this job.
+
+Return ONLY a JSON object — no extra text, no markdown fences:
+{"keywords":["key skill from job"],"rewrites":[{"original":"weak text from resume","improved":"optimized version for this job"}],"missingSkills":["skill not in resume"],"summary":"optimized professional summary tailored to this job"}`
+}
+
+function normalizeOptimizeResult(data) {
+  const toArray = (v) =>
+    Array.isArray(v) ? v.map(String).filter(Boolean).slice(0, 12) : []
+  const toRewrites = (v) =>
+    Array.isArray(v)
+      ? v.filter(r => r && typeof r === "object" && r.original && r.improved)
+          .map(r => ({ original: sanitizeString(String(r.original), 500), improved: sanitizeString(String(r.improved), 500) }))
+          .slice(0, 8)
+      : []
+  return {
+    keywords:      toArray(data?.keywords),
+    rewrites:      toRewrites(data?.rewrites),
+    missingSkills: toArray(data?.missingSkills),
+    summary:       sanitizeString(String(data?.summary || ""), 600),
+  }
+}
+
+function getOptimizeStub(resumeData, lang) {
+  const isAr = lang === "ar"
+  return normalizeOptimizeResult({
+    keywords: isAr
+      ? ["JavaScript", "React", "Node.js", "API", "Git", "Agile"]
+      : ["JavaScript", "React", "Node.js", "REST API", "Git", "Agile", "CI/CD"],
+    rewrites: [
+      {
+        original: isAr ? "عملت على تطوير تطبيقات الويب" : "Worked on web application development",
+        improved: isAr
+          ? "طوّر تطبيقات ويب متجاوبة باستخدام React و Node.js، مما حسّن تجربة المستخدم وقلّل وقت التحميل بنسبة 35%"
+          : "Developed responsive web applications using React and Node.js, improving user experience and reducing load time by 35%",
+      },
+      {
+        original: isAr ? "مسؤول عن كتابة الكود واختبار البرامج" : "Responsible for writing code and testing software",
+        improved: isAr
+          ? "صمّم ونفّذ REST APIs وكتب اختبارات وحدة شاملة، مما رفع تغطية الاختبارات إلى 90% وقلّل الأخطاء الإنتاجية بنسبة 50%"
+          : "Engineered REST APIs and implemented comprehensive unit tests, achieving 90% code coverage and reducing production bugs by 50%",
+      },
+    ],
+    missingSkills: isAr
+      ? ["CI/CD", "Docker", "اختبارات الوحدة", "TypeScript"]
+      : ["CI/CD", "Docker", "Unit Testing", "TypeScript"],
+    summary: isAr
+      ? "مطور ويب متمرّس متخصص في React و Node.js مع خبرة في بناء تطبيقات ويب قابلة للتوسع. ملتزم بأفضل ممارسات البرمجة وتقديم حلول عالية الجودة. (تجريبي — أضف ANTHROPIC_API_KEY لتفعيل التحسين الحقيقي)"
+      : "Results-driven Full-Stack Developer specializing in React and Node.js with a track record of building scalable web applications. Committed to clean code practices, CI/CD pipelines, and delivering high-quality solutions in Agile environments. (Demo — add ANTHROPIC_API_KEY for real optimization)",
+  })
+}
+
+app.post("/api/optimize-resume", aiLimiter, async (req, res) => {
+  try {
+    const { lang, resumeData, jobDescription } = req.body || {}
+    const safeLang = ["en", "ar"].includes(lang) ? lang : "en"
+
+    if (!resumeData || typeof resumeData !== "object") {
+      return res.status(400).json({ error: "resumeData is required." })
+    }
+    if (!jobDescription || typeof jobDescription !== "string" || jobDescription.trim().length < 20) {
+      return res.status(400).json({ error: "Job description is required (min 20 characters)." })
+    }
+
+    const sanitized = sanitizeResumeData(resumeData)
+    if (!sanitized) {
+      return res.status(400).json({ error: "Invalid resumeData." })
+    }
+
+    const safeJobDesc = sanitizeString(jobDescription, 3000)
+
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return res.json(getOptimizeStub(sanitized, safeLang))
+    }
+
+    const prompt = buildOptimizePrompt(sanitized, safeJobDesc, safeLang)
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error(`[AI-Optimize] Anthropic API error ${response.status}:`, errText)
+      return res.json(getOptimizeStub(sanitized, safeLang))
+    }
+
+    const aiData  = await response.json()
+    const rawText = aiData.content?.map(b => b.text || "").join("") || ""
+    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
+
+    let parsed
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch (parseErr) {
+      console.error("[AI-Optimize] JSON parse failed:", parseErr.message)
+      return res.json(getOptimizeStub(sanitized, safeLang))
+    }
+
+    return res.json(normalizeOptimizeResult(parsed))
+
+  } catch (err) {
+    console.error("[AI-Optimize] Error:", err)
+    return res.status(500).json({ error: "Internal server error." })
+  }
+})
+
+// ─── AI Job Tailor ───────────────────────────────────────────────────────────
+
+function buildTailorPrompt(resumeData, jobDescription, jobTitle, lang) {
+  const isAr = lang === "ar"
+
+  const resumeStr = JSON.stringify({
+    name: resumeData.name,
+    role: resumeData.role,
+    summary: resumeData.summary,
+    skills: resumeData.skills,
+    experience: resumeData.experience,
+  }, null, 2)
+
+  if (isAr) {
+    return `أنت خبير في تخصيص السير الذاتية لأنظمة ATS.
+
+الوظيفة المستهدفة: ${jobTitle || "غير محدد"}
+وصف الوظيفة:
+${jobDescription}
+
+بيانات السيرة الذاتية الحالية:
+${resumeStr}
+
+حلل متطلبات الوظيفة وقدّم اقتراحات لتخصيص السيرة الذاتية. أرجع JSON فقط بالشكل التالي:
+{
+  "matchScore": <0-100 نسبة التوافق الحالي>,
+  "missingKeywords": ["كلمة مفتاحية ناقصة 1", "كلمة 2"],
+  "presentKeywords": ["كلمة موجودة 1", "كلمة 2"],
+  "suggestedSummary": "<ملخص مهني معدّل يتوافق مع الوظيفة>",
+  "currentSummary": "<الملخص الحالي>",
+  "suggestedSkills": "<مهارات معدّلة مفصولة بفواصل تتوافق مع الوظيفة>",
+  "currentSkills": "<المهارات الحالية>",
+  "suggestedExperience": "<وصف خبرة معدّل يتوافق مع الوظيفة>",
+  "currentExperience": "<وصف الخبرة الحالي>"
+}`
+  }
+
+  return `You are an expert ATS resume tailoring consultant.
+
+Target Job: ${jobTitle || "Not specified"}
+Job Description:
+${jobDescription}
+
+Current Resume Data:
+${resumeStr}
+
+Analyze the job requirements and suggest specific changes to tailor the resume. Return ONLY JSON — no extra text:
+{
+  "matchScore": <0-100 current match percentage>,
+  "missingKeywords": ["missing keyword 1", "keyword 2"],
+  "presentKeywords": ["present keyword 1", "keyword 2"],
+  "suggestedSummary": "<rewritten professional summary tailored to this job>",
+  "currentSummary": "<current summary>",
+  "suggestedSkills": "<rewritten skills comma-separated, tailored to this job>",
+  "currentSkills": "<current skills>",
+  "suggestedExperience": "<rewritten first experience description tailored to this job>",
+  "currentExperience": "<current first experience description>"
+}`
+}
+
+function getTailorStub(resumeData, lang) {
+  const isAr = lang === "ar"
+  const currentSummary = resumeData.summary || ""
+  const currentSkills  = resumeData.skills || ""
+  const firstExp = resumeData.experience?.[0]?.desc || ""
+
+  if (isAr) {
+    return {
+      matchScore: 58,
+      missingKeywords: ["القيادة", "إدارة المشاريع", "Agile", "Scrum"],
+      presentKeywords: ["Python", "JavaScript", "Git"],
+      suggestedSummary: currentSummary
+        ? currentSummary + " متخصص في منهجيات Agile وإدارة المشاريع التقنية."
+        : "محترف تقني ذو خبرة في تطوير البرمجيات وإدارة المشاريع بمنهجيات Agile.",
+      currentSummary,
+      suggestedSkills: currentSkills
+        ? currentSkills + ", Agile, Scrum, إدارة المشاريع, القيادة"
+        : "Python, JavaScript, Git, Agile, Scrum, إدارة المشاريع, القيادة",
+      currentSkills,
+      suggestedExperience: firstExp
+        ? firstExp + "\nقاد فريق تطوير باستخدام منهجية Agile/Scrum"
+        : "قاد تطوير أنظمة تقنية باستخدام منهجية Agile مع فريق من 5 أعضاء",
+      currentExperience: firstExp,
+    }
+  }
+
+  return {
+    matchScore: 58,
+    missingKeywords: ["Leadership", "Project Management", "Agile", "Scrum"],
+    presentKeywords: ["Python", "JavaScript", "Git"],
+    suggestedSummary: currentSummary
+      ? currentSummary + " Experienced in Agile methodologies and technical project management."
+      : "Results-driven professional with expertise in software development and Agile project management.",
+    currentSummary,
+    suggestedSkills: currentSkills
+      ? currentSkills + ", Agile, Scrum, Project Management, Leadership"
+      : "Python, JavaScript, Git, Agile, Scrum, Project Management, Leadership",
+    currentSkills,
+    suggestedExperience: firstExp
+      ? firstExp + "\nLed development team using Agile/Scrum methodology"
+      : "Led development of technical systems using Agile methodology with a team of 5",
+    currentExperience: firstExp,
+  }
+}
+
+app.post("/api/tailor-resume", aiLimiter, async (req, res) => {
+  try {
+    const { lang, resumeData, jobDescription, jobTitle } = req.body || {}
+    const safeLang = ["en", "ar"].includes(lang) ? lang : "en"
+
+    if (!resumeData || typeof resumeData !== "object") {
+      return res.status(400).json({ error: "resumeData is required." })
+    }
+    if (!jobDescription || typeof jobDescription !== "string" || jobDescription.trim().length < 20) {
+      return res.status(400).json({ error: "Job description is required (min 20 characters)." })
+    }
+
+    const sanitized = sanitizeResumeData(resumeData)
+    if (!sanitized) {
+      return res.status(400).json({ error: "Invalid resumeData." })
+    }
+
+    const safeJobDesc  = sanitizeString(jobDescription, 3000)
+    const safeJobTitle = sanitizeString(jobTitle || "", 150)
+
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return res.json(getTailorStub(sanitized, safeLang))
+    }
+
+    const prompt = buildTailorPrompt(sanitized, safeJobDesc, safeJobTitle, safeLang)
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      console.error(`[AI-Tailor] Anthropic API error ${response.status}`)
+      return res.json(getTailorStub(sanitized, safeLang))
+    }
+
+    const aiData  = await response.json()
+    const rawText = aiData.content?.map(b => b.text || "").join("") || ""
+    const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim()
+
+    let parsed
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch {
+      console.error("[AI-Tailor] JSON parse failed")
+      return res.json(getTailorStub(sanitized, safeLang))
+    }
+
+    // Normalize
+    const result = {
+      matchScore: Math.min(100, Math.max(0, Number(parsed.matchScore) || 0)),
+      missingKeywords: Array.isArray(parsed.missingKeywords)
+        ? parsed.missingKeywords.map(String).filter(Boolean).slice(0, 10) : [],
+      presentKeywords: Array.isArray(parsed.presentKeywords)
+        ? parsed.presentKeywords.map(String).filter(Boolean).slice(0, 10) : [],
+      suggestedSummary: sanitizeString(String(parsed.suggestedSummary || ""), 800),
+      currentSummary: sanitizeString(String(parsed.currentSummary || ""), 800),
+      suggestedSkills: sanitizeString(String(parsed.suggestedSkills || ""), 500),
+      currentSkills: sanitizeString(String(parsed.currentSkills || ""), 500),
+      suggestedExperience: sanitizeString(String(parsed.suggestedExperience || ""), 800),
+      currentExperience: sanitizeString(String(parsed.currentExperience || ""), 800),
+    }
+
+    return res.json(result)
+
+  } catch (err) {
+    console.error("[AI-Tailor] Error:", err)
     return res.status(500).json({ error: "Internal server error." })
   }
 })

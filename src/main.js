@@ -18,8 +18,9 @@ import { saveData, loadData, clearData, createAutosave } from "./modules/Storage
 import { renderFullPreview }             from "./modules/Preview.js"
 import { calculateATSScore }             from "./modules/Ats.js"
 import { exportPDF }                     from "./modules/Pdf.js"
-import { initAIPanel, analyzeResume, openAIPanel, closeAIPanel } from "./modules/Ai.js"
+import { initAIPanel, analyzeResume, optimizeResume, openAIPanel, closeAIPanel } from "./modules/Ai.js"
 import { initShare, decodeShareLink }    from "./modules/Share.js"
+import { initJobTailor, tailorResume, closeTailorModal } from "./modules/JobTailor.js"
 import { hasCompletedOnboarding, initOnboarding } from "./modules/Onboarding.js"
 import {
   createEducation, createExperience, createProject, createCertification, createLanguageItem,
@@ -338,11 +339,13 @@ function initMobilePreviewToggle() {
 
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return
-  const aiPanel    = $id("aiPanel")
-  const shareModal = $id("shareModal")
+  const aiPanel     = $id("aiPanel")
+  const shareModal  = $id("shareModal")
+  const tailorModal = $id("tailorModal")
   // Confirm dialog handles its own Escape key internally — no need to handle it here
-  if (aiPanel?.classList.contains("open"))          { closeAIPanel(); return }
-  if (!shareModal?.classList.contains("hidden"))     { $id("shareCloseBtn")?.click(); return }
+  if (aiPanel?.classList.contains("open"))           { closeAIPanel(); return }
+  if (!tailorModal?.classList.contains("hidden"))     { closeTailorModal(); return }
+  if (!shareModal?.classList.contains("hidden"))      { $id("shareCloseBtn")?.click(); return }
 })
 
 // ─── Onboarding AI Helper ─────────────────────────────────────────────────────
@@ -576,6 +579,9 @@ function init() {
   })
   $id("aiAnalyzeBtn")?.addEventListener("click", () => {
     analyzeResume(getState())
+  })
+  $id("aiOptimizeBtn")?.addEventListener("click", () => {
+    optimizeResume(getState())
   })
 
   // 12. Share feature
