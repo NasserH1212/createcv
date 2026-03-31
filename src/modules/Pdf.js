@@ -6,7 +6,7 @@
  * avoiding manual cloning issues (blank pages, positioning bugs).
  *
  * Font: Calibri (ATS standard) with Arial/Helvetica fallback.
- * Output: A4 portrait, no margins, no shift, no blank pages.
+ * Output: A4 portrait, single page, sharp text, no blank pages.
  */
 
 "use strict"
@@ -46,6 +46,7 @@ const A4_PX = 794
  * - Use onclone to apply PDF-safe styles on html2canvas's internal clone
  * - This ensures the clone inherits all CSS class styles (template, tags, etc.)
  * - No manual cloneNode — avoids blank PDF issues
+ * - Use pagebreak: { mode: "avoid-all" } to force single-page output
  *
  * @param {HTMLElement} resumePreviewEl — the #resumePreview element
  * @param {string} filename — e.g. "John-Smith.pdf"
@@ -55,19 +56,21 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
   await loadHtml2Pdf()
 
   const options = {
-    margin:   0,
+    margin:      0,
     filename,
-    image:    { type: "jpeg", quality: 0.98 },
+    image:       { type: "jpeg", quality: 0.98 },
+    pagebreak:   { mode: ["avoid-all"] },
     html2canvas: {
-      scale:           2,
+      scale:           3,
       useCORS:         true,
       letterRendering: true,
       logging:         false,
       allowTaint:      true,
       backgroundColor: "#ffffff",
       windowWidth:     A4_PX,
+      width:           A4_PX,
       scrollX:         0,
-      scrollY:         -window.scrollY,
+      scrollY:         0,
       onclone: (clonedDoc) => {
         const el = clonedDoc.getElementById("resumePreview")
         if (!el) return
@@ -75,12 +78,38 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
         // Remove empty sections from the PDF
         el.querySelectorAll(".empty-section").forEach(s => s.remove())
 
-        // Force PDF-safe styles on the clone
-        // These override only layout/sizing — template classes remain intact
+        // Force preview-panel visible — windowWidth (794px) triggers
+        // the ≤1200px media query which sets .preview-panel to display:none
+        const panel = el.closest(".preview-panel")
+        if (panel) {
+          Object.assign(panel.style, {
+            display:  "block",
+            width:    A4_PX + "px",
+            padding:  "0",
+            margin:   "0",
+            overflow: "visible",
+          })
+        }
+
+        // Ensure the preview-shell parent doesn't constrain width
+        const shell = el.closest(".preview-shell")
+        if (shell) {
+          Object.assign(shell.style, {
+            padding:    "0",
+            margin:     "0",
+            background: "#ffffff",
+            overflow:   "visible",
+            width:      A4_PX + "px",
+          })
+        }
+
+        // Force PDF-safe styles on the resume paper clone
+        // box-sizing: border-box means width INCLUDES padding
         Object.assign(el.style, {
-          width:        A4_W + "mm",
-          minHeight:    A4_H + "mm",
-          maxWidth:     "none",
+          boxSizing:    "border-box",
+          width:        A4_PX + "px",
+          maxWidth:     A4_PX + "px",
+          minHeight:    "auto",
           padding:      "18mm 18mm 16mm",
           margin:       "0",
           background:   "#ffffff",
@@ -91,24 +120,14 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
           boxShadow:    "none",
           borderRadius: "0",
           overflow:     "visible",
+          position:     "relative",
         })
 
-        // Ensure the preview-shell parent doesn't constrain width
-        const shell = el.closest(".preview-shell")
-        if (shell) {
-          Object.assign(shell.style, {
-            padding:    "0",
-            background: "#ffffff",
-            overflow:   "visible",
-          })
-        }
-
-        // Force preview-panel visible — windowWidth (794px) triggers
-        // the ≤1200px media query which sets .preview-panel to display:none
-        const panel = el.closest(".preview-panel")
-        if (panel) {
-          panel.style.display = "block"
-        }
+        // Reset body/html in clone to prevent any scroll offset
+        clonedDoc.documentElement.style.overflow = "visible"
+        clonedDoc.body.style.overflow = "visible"
+        clonedDoc.body.style.margin = "0"
+        clonedDoc.body.style.padding = "0"
       },
     },
     jsPDF: {

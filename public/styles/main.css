@@ -1039,6 +1039,7 @@ button, input, textarea, select { font: inherit; }
 ═══════════════════════════════════════════════ */
 /* ─── Resume Paper Base (shared by all templates) ─── */
 .resume-paper {
+  box-sizing: border-box;
   width: 210mm;
   min-height: 297mm;
   max-width: 100%;
@@ -1051,6 +1052,8 @@ button, input, textarea, select { font: inherit; }
   color: #111827;
   line-height: 1.45;
   font-family: Calibri, Arial, Helvetica, sans-serif;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* ─── Resume Header (base) ─── */
