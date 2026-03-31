@@ -191,17 +191,27 @@
         </div>
         <div id="aiResult" class="ai-result hidden" aria-live="polite"></div>
         <div id="aiEmpty" class="ai-empty">
-          <div class="ai-empty-icon" aria-hidden="true">✦</div>
-          <p id="aiEmptyText">Click "Analyze" to get AI-powered feedback on your resume.</p>
-          <button type="button" id="aiAnalyzeBtn" class="btn btn-ai-main">
-            Analyze My Resume
-          </button>
-          <div class="ai-optimize-section">
-            <div class="ai-optimize-divider"><span id="aiOptimizeDivider">or</span></div>
-            <label for="aiJobDesc" class="ai-optimize-label" id="aiOptimizeLabel">Paste a job description to optimize your CV</label>
-            <textarea id="aiJobDesc" class="ai-optimize-textarea" rows="5" placeholder="Paste the job description here..."></textarea>
-            <button type="button" id="aiOptimizeBtn" class="btn btn-ai-optimize">
-              🎯 Optimize CV for this Job
+          <!-- AI Analyze card -->
+          <div class="ai-action-card">
+            <div class="ai-action-icon">✦</div>
+            <h3 id="aiEmptyText">Resume Analysis</h3>
+            <p class="ai-action-desc">Get an ATS score, actionable rewrites, and keyword suggestions powered by AI.</p>
+            <button type="button" id="aiAnalyzeBtn" class="btn btn-ai-main">
+              Analyze My Resume
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="ai-optimize-divider"><span id="aiOptimizeDivider">or</span></div>
+
+          <!-- Job optimize card -->
+          <div class="ai-action-card ai-action-card--secondary">
+            <div class="ai-action-icon ai-action-icon--small">🎯</div>
+            <h3>Job Match</h3>
+            <label for="aiJobDesc" class="ai-action-desc" id="aiOptimizeLabel">Paste a job description to tailor your resume for a specific role.</label>
+            <textarea id="aiJobDesc" class="ai-optimize-textarea" rows="4" placeholder="Paste the job description here..."></textarea>
+            <button type="button" id="aiOptimizeBtn" class="btn btn-ai-secondary">
+              Optimize for this Job
             </button>
           </div>
         </div>
@@ -217,18 +227,14 @@
     <div class="container topbar-inner">
       <div class="brand">
         <div class="brand-icon" aria-hidden="true">CV</div>
-        <div class="brand-text">
-          <!-- h1 used correctly for page title — resume preview uses h2 headings -->
-          <h1 class="brand-title">CreateCV</h1>
-          <p class="brand-subtitle" id="brandSubtitle">Professional ATS Resume Builder</p>
-        </div>
+        <h1 class="brand-title">CreateCV</h1>
       </div>
 
       <div class="topbar-actions" role="toolbar" aria-label="Resume tools">
         <!-- Language toggle -->
         <div class="lang-switch" role="group" aria-label="Language selection">
-          <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">English</button>
-          <button type="button" class="lang-btn"        data-lang="ar" aria-pressed="false">العربية</button>
+          <button type="button" class="lang-btn active" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" class="lang-btn"        data-lang="ar" aria-pressed="false">ع</button>
         </div>
 
         <!-- Template switcher -->
@@ -238,19 +244,27 @@
           <option value="minimal">Minimal ATS</option>
         </select>
 
-        <!-- Primary actions -->
-        <button type="button" id="aiBtn"     class="btn btn-ai"    aria-label="Analyze with AI">✦ AI Analyze</button>
-        <button type="button" id="tailorBtn" class="btn btn-tailor" aria-label="Tailor for job">🎯 Tailor</button>
-        <button type="button" id="shareBtn"  class="btn btn-share" aria-label="Share resume link">🔗 Share</button>
+        <!-- Divider -->
+        <div class="topbar-divider" aria-hidden="true"></div>
 
-        <!-- Secondary actions -->
-        <div class="topbar-secondary" role="group" aria-label="Secondary actions">
-          <button type="button" id="sampleBtn" class="btn btn-soft"        aria-label="Load sample data">Load Sample</button>
-          <button type="button" id="saveBtn"   class="btn btn-dark"        aria-label="Save resume">Save</button>
-          <button type="button" id="clearBtn"  class="btn btn-soft danger" aria-label="Clear all data">Clear</button>
+        <!-- Secondary icon actions -->
+        <button type="button" id="tailorBtn" class="btn btn-icon" aria-label="Tailor for job" title="Tailor for Job">🎯</button>
+        <button type="button" id="shareBtn"  class="btn btn-icon" aria-label="Share resume link" title="Share">🔗</button>
+        <button type="button" id="pdfBtn"    class="btn btn-icon" aria-label="Download PDF" title="Download PDF">⬇</button>
+
+        <!-- More actions menu -->
+        <div class="topbar-more">
+          <button type="button" id="moreMenuBtn" class="btn btn-icon" aria-label="More actions" aria-expanded="false" aria-haspopup="true" title="More">⋯</button>
+          <div id="moreMenu" class="more-menu hidden" role="menu">
+            <button type="button" id="sampleBtn" class="more-menu-item" role="menuitem">📋 Load Sample</button>
+            <button type="button" id="saveBtn"   class="more-menu-item" role="menuitem">💾 Save</button>
+            <div class="more-menu-divider"></div>
+            <button type="button" id="clearBtn"  class="more-menu-item more-menu-item--danger" role="menuitem">🗑 Clear All</button>
+          </div>
         </div>
 
-        <button type="button" id="pdfBtn" class="btn btn-primary" aria-label="Download PDF">⬇ PDF</button>
+        <!-- Primary CTA — AI is the core action -->
+        <button type="button" id="aiBtn" class="btn btn-cta" aria-label="Analyze with AI">✦ Analyze</button>
       </div>
     </div>
   </header>
@@ -258,40 +272,7 @@
   <!-- ═══════════════════════════════════════════════════════════
        HERO SECTION
   ════════════════════════════════════════════════════════════ -->
-  <section class="hero" aria-label="Product overview">
-    <div class="container">
-      <div class="hero-card">
-        <div class="hero-content">
-          <div class="hero-badge" id="heroBadge">✦ ATS-Optimized Resume Builder</div>
-          <h2 id="heroTitle">Build a professional resume that passes ATS systems</h2>
-          <p id="heroDescription">
-            Create a polished bilingual resume with live preview, AI analysis, structured sections, template switching, autosave, and real PDF export.
-          </p>
-          <div class="hero-features" role="list" aria-label="Key features">
-            <span role="listitem" id="heroFeature1">⚡ Live Preview</span>
-            <span role="listitem" id="heroFeature2">🌐 Arabic + English</span>
-            <span role="listitem" id="heroFeature3">📄 Real PDF Export</span>
-            <span role="listitem" id="heroFeature4">✅ ATS Ready</span>
-            <span role="listitem" id="heroFeature5">✦ AI Analysis</span>
-          </div>
-        </div>
-        <div class="hero-stats" role="list" aria-label="Product statistics">
-          <div class="stat-card" role="listitem">
-            <strong>3</strong>
-            <span id="statTemplates">Templates</span>
-          </div>
-          <div class="stat-card" role="listitem">
-            <strong>100%</strong>
-            <span id="statFree">Free</span>
-          </div>
-          <div class="stat-card" role="listitem">
-            <strong>AI</strong>
-            <span id="statAI">Powered</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Hero removed — tool-first UX, no marketing block -->
 
   <!-- Mobile Preview Toggle Button (hidden on desktop via CSS) -->
   <div class="mobile-preview-bar container">
@@ -309,21 +290,17 @@
     <section class="editor-panel" aria-label="Resume editor">
       <div class="panel-card">
         <div class="panel-header">
-          <div>
-            <h2 id="editorTitle">Resume Editor</h2>
-            <p id="editorSubtitle">Fill your details and watch the resume update instantly.</p>
-          </div>
-          <!-- ATS Score meter -->
+          <h2 id="editorTitle">Resume Editor</h2>
+          <p id="editorSubtitle" class="sr-only">Fill your details and watch the resume update instantly.</p>
+          <!-- ATS Score meter — compact inline -->
           <div class="score-box"
                role="meter"
                aria-valuenow="0"
                aria-valuemin="0"
                aria-valuemax="100"
                aria-labelledby="atsLabel">
-            <div class="score-row">
-              <span id="atsLabel">ATS Score</span>
-              <strong id="atsValue">0%</strong>
-            </div>
+            <span id="atsLabel" class="score-label">ATS</span>
+            <strong id="atsValue">0%</strong>
             <div class="score-track" aria-hidden="true">
               <div id="atsBar" class="score-fill score-fill--poor"></div>
             </div>
@@ -331,20 +308,20 @@
           </div>
         </div>
 
-        <!-- Resume Completion Progress -->
+        <!-- Resume Completion Progress — compact inline -->
         <div class="progress-section" id="progressSection">
-          <div class="progress-header">
-            <span class="progress-label" id="progressLabel">Resume Completion</span>
+          <div class="progress-bar-row">
+            <div class="progress-track">
+              <div class="progress-fill" id="progressBar"></div>
+            </div>
             <strong class="progress-value" id="progressValue">0%</strong>
           </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="progressBar"></div>
-          </div>
+          <div class="progress-steps" id="progressChecklist"></div>
           <div class="progress-hint" id="progressHint">
-            <span class="progress-hint-icon" aria-hidden="true">💡</span>
             <span id="progressHintText">Start by adding your name and target role</span>
           </div>
-          <div class="progress-checklist" id="progressChecklist"></div>
+          <!-- Hidden label for backward compat -->
+          <span id="progressLabel" class="sr-only">Resume Completion</span>
         </div>
 
         <div class="panel-body">
@@ -461,11 +438,10 @@
     <!-- ─── PREVIEW PANEL ──────────────────────────────────── -->
     <section class="preview-panel" aria-label="Resume preview">
       <div class="panel-card sticky-card">
-        <div class="panel-header">
-          <div>
-            <h2 id="previewTitle">Live Preview</h2>
-            <p id="previewSubtitle">Your ATS-ready resume updates in real time.</p>
-          </div>
+        <div class="panel-header panel-header--minimal">
+          <h2 id="previewTitle">Preview</h2>
+          <p id="previewSubtitle" class="sr-only">Your ATS-ready resume updates in real time.</p>
+          <span class="preview-live-badge">Live</span>
         </div>
         <div class="preview-shell">
           <article id="resumePreview" class="resume-paper template-classic" aria-label="Resume document">
@@ -606,6 +582,29 @@
     </div>
   </div>
   <div id="shareOverlay" class="modal-overlay hidden" aria-hidden="true"></div>
+
+  <!-- More menu toggle (inline — no main.js changes needed) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("moreMenuBtn");
+      const menu = document.getElementById("moreMenu");
+      if (!btn || !menu) return;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = !menu.classList.contains("hidden");
+        menu.classList.toggle("hidden");
+        btn.setAttribute("aria-expanded", String(!open));
+      });
+      document.addEventListener("click", () => {
+        menu.classList.add("hidden");
+        btn.setAttribute("aria-expanded", "false");
+      });
+      menu.addEventListener("click", () => {
+        menu.classList.add("hidden");
+        btn.setAttribute("aria-expanded", "false");
+      });
+    });
+  </script>
 
   <!-- App entry point — ES module, deferred by default -->
   <script type="module" src="/src/main.js"></script>
