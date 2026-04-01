@@ -44,9 +44,9 @@ const A4_PX = 794
  * Strategy:
  * - Pass the ORIGINAL #resumePreview element to html2pdf
  * - Use onclone to apply PDF-safe styles on html2canvas's internal clone
- * - This ensures the clone inherits all CSS class styles (template, tags, etc.)
- * - No manual cloneNode — avoids blank PDF issues
- * - Use pagebreak: { mode: "avoid-all" } to force single-page output
+ * - Force all parent containers visible and properly sized
+ * - Remove min-height to prevent forced 2-page output
+ * - Use avoid-all pagebreak mode for single-page output
  *
  * @param {HTMLElement} resumePreviewEl — the #resumePreview element
  * @param {string} filename — e.g. "John-Smith.pdf"
@@ -61,7 +61,7 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
     image:       { type: "jpeg", quality: 0.98 },
     pagebreak:   { mode: ["avoid-all"] },
     html2canvas: {
-      scale:           3,
+      scale:           2,
       useCORS:         true,
       letterRendering: true,
       logging:         false,
@@ -78,56 +78,76 @@ export async function exportPDF(resumePreviewEl, filename = "CreateCV-Resume.pdf
         // Remove empty sections from the PDF
         el.querySelectorAll(".empty-section").forEach(s => s.remove())
 
-        // Force preview-panel visible — windowWidth (794px) triggers
-        // the ≤1200px media query which sets .preview-panel to display:none
-        const panel = el.closest(".preview-panel")
-        if (panel) {
-          Object.assign(panel.style, {
-            display:  "block",
-            width:    A4_PX + "px",
-            padding:  "0",
-            margin:   "0",
-            overflow: "visible",
-          })
-        }
+        // ── Force ALL ancestor containers visible and properly sized ──
 
-        // Ensure the preview-shell parent doesn't constrain width
-        const shell = el.closest(".preview-shell")
-        if (shell) {
-          Object.assign(shell.style, {
-            padding:    "0",
-            margin:     "0",
-            background: "#ffffff",
-            overflow:   "visible",
-            width:      A4_PX + "px",
-          })
-        }
+        // 1. Force body/html clean
+        clonedDoc.documentElement.style.cssText = "margin:0;padding:0;overflow:visible;width:" + A4_PX + "px;"
+        clonedDoc.body.style.cssText = "margin:0;padding:0;overflow:visible;width:" + A4_PX + "px;background:#fff;"
 
-        // Force PDF-safe styles on the resume paper clone
-        // box-sizing: border-box means width INCLUDES padding
-        Object.assign(el.style, {
-          boxSizing:    "border-box",
-          width:        A4_PX + "px",
-          maxWidth:     A4_PX + "px",
-          minHeight:    "auto",
-          padding:      "18mm 18mm 16mm",
-          margin:       "0",
-          background:   "#ffffff",
-          color:        "#111827",
-          fontFamily:   "Calibri, Arial, Helvetica, sans-serif",
-          fontSize:     "11pt",
-          lineHeight:   "1.45",
-          boxShadow:    "none",
-          borderRadius: "0",
-          overflow:     "visible",
-          position:     "relative",
+        // 2. Hide everything except the resume path
+        //    This prevents any other element from adding height
+        Array.from(clonedDoc.body.children).forEach(child => {
+          if (!child.contains(el) && child !== el) {
+            child.style.display = "none"
+          }
         })
 
-        // Reset body/html in clone to prevent any scroll offset
-        clonedDoc.documentElement.style.overflow = "visible"
-        clonedDoc.body.style.overflow = "visible"
-        clonedDoc.body.style.margin = "0"
-        clonedDoc.body.style.padding = "0"
+        // 3. Force preview-panel visible (≤1200px media query hides it)
+        const panel = el.closest(".preview-panel")
+        if (panel) {
+          panel.style.cssText = "display:block !important;width:" + A4_PX + "px;padding:0;margin:0;overflow:visible;border:none;background:#fff;"
+        }
+
+        // 4. Force preview-shell clean
+        const shell = el.closest(".preview-shell")
+        if (shell) {
+          shell.style.cssText = "padding:0;margin:0;background:#fff;overflow:visible;width:" + A4_PX + "px;"
+        }
+
+        // 5. Force app-layout and any grid parents to be simple block
+        const layout = clonedDoc.querySelector(".app-layout")
+        if (layout) {
+          layout.style.cssText = "display:block;width:" + A4_PX + "px;margin:0;padding:0;overflow:visible;"
+        }
+
+        // 6. Force panel-card wrapper clean
+        const panelCard = el.closest(".panel-card")
+        if (panelCard) {
+          panelCard.style.cssText = "display:block;width:" + A4_PX + "px;padding:0;margin:0;border:none;background:#fff;overflow:visible;"
+        }
+
+        // 7. Force sticky-card wrapper clean
+        const stickyCard = el.closest(".sticky-card")
+        if (stickyCard) {
+          stickyCard.style.cssText = "position:static;width:" + A4_PX + "px;padding:0;margin:0;overflow:visible;"
+        }
+
+        // 8. Hide panel headers inside the preview panel
+        const panelHeaders = panel ? panel.querySelectorAll(".panel-header, .panel-header--minimal") : []
+        panelHeaders.forEach(h => { h.style.display = "none" })
+
+        // ── Force PDF-safe styles on the resume paper ──
+        el.style.cssText = [
+          "box-sizing: border-box",
+          "width: " + A4_PX + "px",
+          "max-width: " + A4_PX + "px",
+          "min-height: auto",          // KEY FIX: remove 297mm min-height
+          "height: auto",              // Let content determine height
+          "padding: 18mm 18mm 16mm",
+          "margin: 0",
+          "background: #ffffff",
+          "color: #111827",
+          "font-family: Calibri, Arial, Helvetica, sans-serif",
+          "font-size: 11pt",
+          "line-height: 1.45",
+          "box-shadow: none",
+          "border-radius: 0",
+          "border: none",
+          "overflow: visible",
+          "position: relative",
+          "float: none",
+          "transform: none",
+        ].join(";") + ";"
       },
     },
     jsPDF: {
